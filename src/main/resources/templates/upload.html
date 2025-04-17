@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Upload Video</title>
+</head>
+<body>
+<h2>Upload a Meeting Video</h2>
+<form method="post" enctype="multipart/form-data" action="/upload">
+  <input type="file" name="file" accept="video/*" required />
+  <button type="submit">Upload</button>
+
+</form>
+<p th:if="${message}" th:text="${message}"></p>
+<p th:if="${audioFile}">
+  <a th:href="@{'/voice/' + ${audioFile}}" download>Download Extracted Audio</a>
+</p>
+</body>
+</html>
