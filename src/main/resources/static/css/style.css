@@ -75,20 +75,10 @@ margin-top: 9.6rem !important ;
 }
 
 .feature-box p {
-  color:#1E2124; /* أو أي لون أفتح حسب المظهر المطلوب */
-  font-size: 1.6rem;
-  font-weight: 700;
-  text-align: center; /* بدل justify */
- /* إضافة line-height لتحسين المظهر */
-  /*color:#1E2124;
-  font-size: 1.6rem;
-  font-weight: 700;
-  text-align: justify;*/
-
-   color: #1E2124; /* Dark color for paragraph text */
+   color: #1E2124;
     font-size: 1.6rem;
     font-weight: 700;
     text-align: center;
-    max-width: 90%; /* To control text width if needed */
-    margin: 0 auto; /* Center the text block */
+    max-width: 90%; 
+    margin: 0 auto; 
 }
