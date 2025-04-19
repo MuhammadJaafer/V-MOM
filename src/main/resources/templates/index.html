@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+  <head>
+    <meta
+      name="description"
+      content="V-MOM is an intelligent system that automatically converts meeting video recordings into well-structured minutes using speech-to-text and natural language processing technologies."
+    />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+    <link rel="stylesheet" th:href="@{/css/general.css}" />
+    <meta charset="UTF-8" />
+    <title>Title</title>
+  </head>
+  <body>
+  <header th:replace="fragments/header :: header"></header>
+    <main>
+      <section  class="section-hero container center-text">
+      <h1 class="heading-primary">
+        Welcome To V-MoM
+      </h1>
+      <p class="hero-description">
+        Transform your video recording To Structured minutes of meetings in seconds
+      </p>
+        <a href="#cta" class="btn btn--full margin-right-sm"
+        >Start Now!</a
+        >
+        </section>
+      <section class="features container  grid grid--3--cols">
+        <div class="feature-box">
+          <h3 class="heading-tertiary">Smart Summarization</h3>
+          <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et
+          </p>
+        </div>
+        <div class="feature-box">
+          <h3 class="heading-tertiary">Blazingly Fast</h3>
+          <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et
+          </p>
+        </div>
+        <div class="feature-box">
+          <h3 class="heading-tertiary">Easy Export</h3>
+          <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et
+          </p>
+        </div>
+      </section>
+
+    </main>
+
+  </body>
+</html>
