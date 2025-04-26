@@ -100,10 +100,10 @@ public class VideoUploadController {
       RedirectAttributes redirectAttributes) {
 
     // Convert video to audio
-    boolean success = audioService.extractAudioFromVideo(videoFile);
+    String Text = audioService.extractAndTranscribe(videoFile);
 
-    if (success) {
-      addMessage(redirectAttributes, "Video converted to audio successfully");
+    if (!Text.isEmpty()) {
+      addMessage(redirectAttributes, "Video converted to Text successfully: " + Text);
     } else {
       addMessage(redirectAttributes, "Video conversion failed");
     }
