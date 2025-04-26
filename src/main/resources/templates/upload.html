@@ -1,18 +1,74 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en" dir="ltr">
 <head>
-  <title>Upload Video</title>
+  <meta charset="UTF-8">
+  <meta
+          name="description"
+          content="V-MOM is an intelligent system that automatically converts meeting video recordings into well-structured minutes using speech-to-text and natural language processing technologies."
+  />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+          href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+          rel="stylesheet"
+  />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" th:href="@{/css/general.css}" />
+  <link rel="stylesheet" th:href="@{/css/upload.css}" />
+
+  <title>V-MoM - Minutes of Meeting</title>
 </head>
 <body>
-<h2>Upload a Meeting Video</h2>
-<form method="post" enctype="multipart/form-data" action="/upload">
-  <input type="file" name="file" accept="video/*" required />
-  <button type="submit">Upload</button>
+<div class="sidebar">
+  <div class="logo">V-MoM</div>
 
-</form>
-<p th:if="${message}" th:text="${message}"></p>
-<p th:if="${audioFile}">
-  <a th:href="@{'/voice/' + ${audioFile}}" download>Download Extracted Audio</a>
-</p>
+  <h2 class="center-text">Upload Meeting Video</h2>
+  <form method="post" enctype="multipart/form-data" action="/upload" class="upload-area">
+    <div class="video-icon">
+      <div class="play-button"></div>
+    </div>
+    <p class="upload-text">Drag and drop your video file here</p>
+    <input type="file" name="file" accept="video/*" required style="display: none;" id="fileInput" />
+    <button type="button" class="browse-button" onclick="document.getElementById('fileInput').click()">Browse Files</button>
+    <div class="form-container">
+      <button type="submit">Upload</button>
+    </div>
+  </form>
+
+  <h2>Enter AI Command</h2>
+  <input type="text" class="command-input">
+</div>
+
+<div class="main-content">
+  <h1 class="main-title center-text">Minutes of Meeting</h1>
+
+  <div class="minutes-container">
+    <div class="section">
+      <h2 class="section-title">Messages</h2>
+      <div class="message" th:if="${message}" th:text="${message}"></div>
+      <a class="download-link" th:if="${audioFile}" th:href="@{'/voice/' + ${audioFile}}" download>Download Extracted Audio</a>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Key Points</h2>
+      <!-- Empty content for demonstration -->
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Action Items</h2>
+      <!-- Empty content for demonstration -->
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Decisions</h2>
+      <!-- Empty content for demonstration -->
+    </div>
+  </div>
+
+  <div class="button-container ">
+    <button class="button">Edit</button>
+    <button class="button">Export</button>
+  </div>
+</div>
 </body>
 </html>
