@@ -23,11 +23,17 @@
   <div class="logo">V-MoM</div>
 
   <h2 class="center-text">Upload Meeting Video</h2>
-  <form method="post" enctype="multipart/form-data" action="/upload" class="upload-area">
-    <div class="video-icon">
-      <div class="play-button"></div>
+  <form method="post" enctype="multipart/form-data" action="/upload" class="upload-area" id="upload-area">
+    <div class="video-preview-container">
+      <div class="video-icon" id="video-icon">
+        <div class="play-button"></div>
+      </div>
+      <video id="video-preview" class="video-preview" style="display: none;"></video>
+      <canvas id="thumbnail-canvas" style="display: none;"></canvas>
+      <img id="video-thumbnail" class="video-thumbnail" style="display: none;" alt="Video thumbnail">
+      <p id="file-name" class="file-name"></p>
     </div>
-    <p class="upload-text">Drag and drop your video file here</p>
+    <p class="upload-text" id="upload-text">Drag and drop your video file here</p>
     <input type="file" name="file" accept="video/*" required style="display: none;" id="fileInput" />
     <button type="button" class="browse-button" onclick="document.getElementById('fileInput').click()">Browse Files</button>
     <div class="form-container">
@@ -65,10 +71,11 @@
     </div>
   </div>
 
-  <div class="button-container ">
+  <div class="button-container">
     <button class="button">Edit</button>
     <button class="button">Export</button>
   </div>
 </div>
+<script th:src="@{/js/upload.js}"></script>
 </body>
 </html>
