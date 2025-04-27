@@ -136,12 +136,13 @@ body {
 
 
 
-  /*  .message {
+    .message {
+        font-size: 16px;
         background-color: #33353a;
         padding: 15px;
         border-radius: 6px;
         margin-top: 10px;
-    }*/
+    }
 
     .download-link {
         display: inline-block;
