@@ -1,0 +1,80 @@
+.login-container {
+            max-width: 50rem;
+            margin: 8rem auto;
+            background-color: #282B30;
+            border-radius: 20px;
+            padding: 3rem;
+            color: white;
+}
+
+.login-title {
+            font-size: 3.6rem;
+            font-weight: 600;
+
+            margin-bottom: 8rem;
+}
+
+.form-group {
+            margin-bottom: 2rem;
+}
+
+.form-control {
+            width: 65%;
+            padding: 1.3rem;
+            border-radius: 10px;
+            border: 1px ;
+            background-color: #333940;
+            color: white;
+            box-sizing: border-box;
+}
+.form-control:focus {
+            outline: none;
+            border: 1px solid #5a67e8;
+            background-color: #333940;
+}
+::-webkit-input-placeholder { /* Chrome/Opera/Safari */
+                color: #889DE8;
+                 opacity: 0.8;
+}
+::-moz-placeholder { /* Firefox 19+ */
+                color: #889DE8;
+                 opacity: 0.8;
+}
+:-ms-input-placeholder { /* IE 10+ */
+                color: #889DE8;
+                 opacity: 0.8;
+}
+:-moz-placeholder { /* Firefox 18- */
+                color: #889DE8;
+                 opacity: 0.8;
+}
+
+.login-btn {
+            width: 40%;
+            background-color: #5865F2;
+            font-size: 1.6rem;
+            color: white;
+            padding: 1.6rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight:700;
+}
+
+.login-footer {
+            font-size: 1.4rem;
+            margin-top: 2rem;
+            font-weight:300;
+}
+
+.signup-link {
+            color: #5a67e8;
+}
+
+.forgot-link {
+            color: #5a67e8;
+
+            display: block;
+            margin-top: 2rem;
+            font-size: 1.4rem;
+}
