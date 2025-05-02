@@ -103,7 +103,7 @@ public class VideoUploadController {
     String Text = audioService.extractAndTranscribe(videoFile);
 
     if (!Text.isEmpty()) {
-      addMessage(redirectAttributes, "Video converted to Text successfully: " + Text);
+      addMessage(redirectAttributes,  Text);
     } else {
       addMessage(redirectAttributes, "Video conversion failed");
     }

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta
+          name="description"
+          content="V-MOM is an intelligent system that automatically converts meeting video recordings into well-structured minutes using speech-to-text and natural language processing technologies."
+  />
+  <meta charset="UTF-8">
+  <title>signup V-MOM</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+          href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+          rel="stylesheet"
+  />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/style.css}" />
+  <link rel="stylesheet" th:href="@{/css/general.css}" />
+  <link rel="stylesheet" th:href="@{/css/login.css}" />
+</head>
+<body>
+<header th:replace="fragments/header :: header"></header>
+<div class="login-container center-text">
+  <h2 class="login-title ">Create your Account</h2>
+  <form th:action="@{/signup}" method="post">
+    <div class="form-group">
+      <input type="text" class="form-control" id="name" name="name" placeholder="Name*" required>
+    </div>
+    <div class="form-group">
+      <input type="email" class="form-control" id="email" name="email" placeholder="Email*" required>
+    </div>
+    <div class="form-group">
+      <input type="password" class="form-control" id="password" name="password" placeholder="Password*" required>
+    </div>
+
+    <button type="submit" class="login-btn">Sign in</button>
+  </form>
+</div>
+
+
+</body>
+</html>

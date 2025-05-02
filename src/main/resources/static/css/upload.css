@@ -216,3 +216,52 @@ body {
     button[type="submit"]:hover {
         background-color: #4651c2;
     }
+
+   .message {
+            font-size: 1.8rem;
+            line-height: 2rem;
+            background-color: #33353a;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+   }
+
+   .message-content {
+           display: none;
+      }
+
+      .message-collapsed {
+           max-height: 12rem; /* Height for collapsed state (about 6 lines) */
+           overflow: hidden;
+           position: relative;
+      }
+
+      .read-more-btn {
+           background-color: #5865F2;
+           color: white;
+           border: none;
+           border-radius: 6px;
+           padding: 0.6rem 1.2rem;
+           font-size: 1.4rem;
+           cursor: pointer;
+           margin-top: 1.0rem;
+           transition: background-color 0.3s ease;
+      }
+
+      .read-more-btn:hover {
+           background-color: #4651c2;
+      }
+
+      .message-collapsed.expanded {
+           max-height: none;
+      }
+
+      .fade-out {
+           position: absolute;
+           bottom: 0;
+           left: 0;
+           width: 100%;
+           height: 4rem;
+           background: linear-gradient(transparent, #33353a);
+           pointer-events: none;
+      }
