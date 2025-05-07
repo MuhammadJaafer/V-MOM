@@ -1,4 +1,64 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Get the elements
+    const originalText = document.getElementById('originalText');
+    const collapsedText = document.getElementById('collapsedText');
+    const readMoreBtn = document.getElementById('readMoreBtn');
+
+    // Check if elements exist (they will only exist when there's a message)
+    if (originalText && collapsedText && readMoreBtn) {
+        // Get the original text content
+        const fullText = originalText.textContent;
+
+        // Only apply "Read More" if text is longer than a certain length
+        const charLimit = 700; // Adjust this value as needed
+
+        if (fullText.length > charLimit) {
+            // Create the collapsed version
+            collapsedText.innerHTML = fullText.substring(0, charLimit) + '...';
+
+            // Add fade effect element
+            const fadeElement = document.createElement('div');
+            fadeElement.className = 'fade-out';
+            collapsedText.appendChild(fadeElement);
+
+            // Show collapsed text and hide original
+            collapsedText.style.display = 'block';
+            originalText.style.display = 'none';
+            readMoreBtn.style.display = 'block';
+
+            // Add click event for "Read More" button
+            readMoreBtn.addEventListener('click', function() {
+                if (collapsedText.classList.contains('expanded')) {
+                    // Collapse
+                    collapsedText.classList.remove('expanded');
+                    collapsedText.innerHTML = fullText.substring(0, charLimit) + '...';
+
+                    // Add fade effect again
+                    const fadeElement = document.createElement('div');
+                    fadeElement.className = 'fade-out';
+                    collapsedText.appendChild(fadeElement);
+
+                    readMoreBtn.textContent = 'Read More';
+                } else {
+                    // Expand
+                    collapsedText.classList.add('expanded');
+                    collapsedText.textContent = fullText;
+                    readMoreBtn.textContent = 'Read Less';
+                }
+            });
+        } else {
+            // If text is short, just show the original content
+            collapsedText.innerHTML = fullText;
+            collapsedText.style.display = 'block';
+            originalText.style.display = 'none';
+            readMoreBtn.style.display = 'none';
+        }
+    }
+});
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
     const uploadArea = document.getElementById('upload-area');
     const fileInput = document.getElementById('fileInput');
     const videoIcon = document.getElementById('video-icon');
