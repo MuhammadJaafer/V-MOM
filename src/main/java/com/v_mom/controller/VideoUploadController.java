@@ -19,7 +19,7 @@ import java.util.UUID;
 @Controller
 public class VideoUploadController {
 
-  private static final String REDIRECT_HOME = "redirect:/";
+  private static final String REDIRECT_HOME = "redirect:/upload";
   private static final String MESSAGE_ATTR = "message";
 
   private final AudioService audioService;
@@ -32,7 +32,7 @@ public class VideoUploadController {
     this.audioService = audioService;
   }
 
-  @GetMapping("/")
+  @GetMapping("/upload")
   public String home() {
     return "upload";
   }
