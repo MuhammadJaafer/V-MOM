@@ -25,10 +25,18 @@
         <h2 class="login-title ">Welcome Back</h2>
         <form th:action="@{/login}" method="post">
             <div class="form-group">
-                <input type="email" class="form-control" id="email" name="email" placeholder="Email*" required>
+                <input type="email" class="form-control" id="email" name="username" placeholder="Email*" required>
             </div>
             <div class="form-group">
                 <input type="password" class="form-control" id="password" name="password" placeholder="Password*" required>
+            </div>
+            <div class="error-messages">
+                <div th:if="${param.invalidEmail}" class="alert alert-danger">
+                    Email address is not registered!
+                </div>
+                <div th:if="${param.invalidPassword}" class="alert alert-danger">
+                    Incorrect password!
+                </div>
             </div>
             <button type="submit" class="login-btn">Sign in</button>
             <div class="login-footer">
