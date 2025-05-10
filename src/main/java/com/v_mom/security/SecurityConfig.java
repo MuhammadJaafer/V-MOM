@@ -31,16 +31,17 @@ public class SecurityConfig {
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
             .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/home","/signup", "/login", "/css/**", "/js/**").permitAll()
+                    .requestMatchers("/", "/signup", "/login", "/css/**", "/js/**").permitAll()
+                    .requestMatchers("/upload").authenticated()
                     .anyRequest().authenticated()
             )
             .formLogin(form -> form
                     .loginPage("/login")
-                    .defaultSuccessUrl("/home")
+                    .defaultSuccessUrl("/")
                     .failureHandler(authFailureHandler)
             )
             .logout(logout -> logout
-                    .logoutSuccessUrl("/home?logout")
+                    .logoutSuccessUrl("/?logout")
                     .permitAll()
             );
 

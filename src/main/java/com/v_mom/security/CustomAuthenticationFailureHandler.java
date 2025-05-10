@@ -3,8 +3,8 @@ package com.v_mom.security;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -17,16 +17,14 @@ public class CustomAuthenticationFailureHandler extends SimpleUrlAuthenticationF
             HttpServletRequest request,
             HttpServletResponse response,
             AuthenticationException exception
-    ) throws IOException {
-        String errorParam = "error";
-
-        Throwable rootCause = exception.getCause();
-        if (rootCause instanceof CustomEmailNotFoundException) {
-            errorParam = "invalidEmail";
+    ) throws IOException, ServletException {
+        if (exception.getCause() instanceof CustomEmailNotFoundException) {
+            request.getSession().setAttribute("invalidEmail", true);
         } else if (exception instanceof BadCredentialsException) {
-            errorParam = "invalidPassword";
+            request.getSession().setAttribute("invalidPassword", true);
         }
 
-        getRedirectStrategy().sendRedirect(request, response, "/login?" + errorParam);
+        setDefaultFailureUrl("/login");
+        super.onAuthenticationFailure(request, response, exception);
     }
 }

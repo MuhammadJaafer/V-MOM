@@ -24,6 +24,7 @@
 
   <h2 class="center-text">Upload Meeting Video</h2>
   <form method="post" enctype="multipart/form-data" action="/upload" class="upload-area" id="upload-area">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
     <div class="video-preview-container">
       <div class="video-icon" id="video-icon">
         <div class="play-button"></div>

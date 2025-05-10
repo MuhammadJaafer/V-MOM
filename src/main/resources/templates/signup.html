@@ -34,7 +34,7 @@
       <input type="password" class="form-control" id="password" name="password" placeholder="Password*" required>
     </div>
     <div class="error-messages">
-      <div th:if="${param.emailExists}" class="alert alert-danger">
+      <div th:if="${emailExists}" class="alert alert-danger">
         This email address is already registered!
       </div>
     </div>

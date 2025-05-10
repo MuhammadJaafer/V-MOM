@@ -8,6 +8,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 
 @Controller
 
@@ -29,11 +31,12 @@ public class signupController {
     public String processSignup(
             @RequestParam("name") String name,
             @RequestParam("email") String email,
-            @RequestParam("password") String password
+            @RequestParam("password") String password,
+            RedirectAttributes redirectAttributes
     ) {
         if (userRepository.findByEmail(email).isPresent()) {
-            return "redirect:/signup?emailExists";
-
+            redirectAttributes.addFlashAttribute("emailExists", true);
+            return "redirect:/signup";
         }
 
         User newUser = new User();
@@ -42,6 +45,7 @@ public class signupController {
         newUser.setPassword(passwordEncoder.encode(password));
         userRepository.save(newUser);
 
-        return "redirect:/login?success";
+        redirectAttributes.addFlashAttribute("success", true);
+        return "redirect:/login";
     }
 }
