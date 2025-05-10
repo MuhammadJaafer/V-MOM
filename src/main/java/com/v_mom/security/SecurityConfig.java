@@ -40,7 +40,7 @@ public class SecurityConfig {
                     .failureHandler(authFailureHandler)
             )
             .logout(logout -> logout
-                    .logoutSuccessUrl("/home?logout") // إضافة بارامتر عند الخروج
+                    .logoutSuccessUrl("/home?logout")
                     .permitAll()
             );
 

@@ -20,7 +20,6 @@ public class CustomAuthenticationFailureHandler extends SimpleUrlAuthenticationF
     ) throws IOException {
         String errorParam = "error";
 
-        // التحقق من السبب الجذري للاستثناء
         Throwable rootCause = exception.getCause();
         if (rootCause instanceof CustomEmailNotFoundException) {
             errorParam = "invalidEmail";

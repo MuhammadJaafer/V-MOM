@@ -32,7 +32,8 @@ public class signupController {
             @RequestParam("password") String password
     ) {
         if (userRepository.findByEmail(email).isPresent()) {
-            return "redirect:/signup?error";
+            return "redirect:/signup?emailExists";
+
         }
 
         User newUser = new User();
