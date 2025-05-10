@@ -18,7 +18,7 @@
             margin-bottom: 2rem;
 }
 
-.form-control {
+.form-control{
             width: 65%;
             padding: 1.3rem;
             border-radius: 10px;
@@ -26,11 +26,29 @@
             background-color: #333940;
             color: white;
             box-sizing: border-box;
+
 }
 .form-control:focus {
             outline: none;
             border: 1px solid #5a67e8;
             background-color: #333940;
+}
+/* منع تغيير النمط عند الملء التلقائي */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s;
+    transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s;
+    -webkit-text-fill-color: white !important;
+    background-color: #333940 !important;
+    box-shadow: 0 0 0 1000px #333940 inset !important;
+}
+
+/* لضمان تطبيق الأنماط على البيانات المحفوظة في المتصفح */
+input.form-control {
+    color: white !important;
+    background-color: #333940 !important;
 }
 ::-webkit-input-placeholder { /* Chrome/Opera/Safari */
                 color: #889DE8;
@@ -77,4 +95,16 @@
             display: block;
             margin-top: 2rem;
             font-size: 1.4rem;
+}
+.alert-danger {
+    color: #ff6b6b;
+    background-color: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    padding: 1.2rem;
+    margin: 1.5rem auto;
+    border-radius: 10px;
+    width: 65%;
+    text-align: center;
+    font-size: 1.4rem;
+    font-weight: 400;
 }

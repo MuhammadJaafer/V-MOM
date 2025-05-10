@@ -1,12 +1,19 @@
 <header class="header" th:fragment="header" xmlns:th="http://www.thymeleaf.org">
-  <a href="#">
+  <a th:href="@{/home}">
     <p class="logo">V-MoM</p>
   </a>
   <nav class="main-nav">
     <ul class="main-nav-list">
       <li><a class="main-nav-link nav-cta" href="#Start now">Start now </a></li>
       <li><a class="main-nav-link" href="#Contact">Contact</a></li>
-      <li><a class="main-nav-link" href="#Login">Login</a></li>
+      <li th:if="${#authentication.principal != 'anonymousUser'}">
+        <form th:action="@{/logout}" method="post">
+          <button class="main-nav-link logout-btn" type="submit">Logout</button>
+        </form>
+      </li>
+      <li th:unless="${#authentication.principal != 'anonymousUser'}">
+        <a class="main-nav-link" th:href="@{/login}">Login</a>
+      </li>
     </ul>
   </nav>
 </header>

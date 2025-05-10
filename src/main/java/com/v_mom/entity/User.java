@@ -25,4 +25,6 @@ public class User {
   @CreationTimestamp
   @Column(updatable = false)
   private LocalDateTime createdAt;
+
+
 }
