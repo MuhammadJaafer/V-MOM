@@ -55,7 +55,7 @@
       <div class="message" th:if="${message}">
         <div class="message-content" id="originalText" th:text="${message}"></div>
         <div class="message-collapsed" id="collapsedText"></div>
-        <button class="read-more-btn" id="readMoreBtn">Read More</button>
+        <button class="read-more-btn" id="readMoreBtn">Show more</button>
       </div>
       <a class="download-link" th:if="${audioFile}" th:href="@{'/voice/' + ${audioFile}}" download>Download Extracted Audio</a>
     </div>

@@ -8,6 +8,9 @@ import com.google.cloud.speech.v1.SpeechRecognitionAlternative;
 import com.google.cloud.speech.v1.SpeechRecognitionResult;
 import com.google.common.util.concurrent.RateLimiter;
 import com.google.protobuf.ByteString;
+import com.v_mom.entity.Meeting;
+import com.v_mom.entity.Transcript;
+import com.v_mom.repository.TranscriptRepository;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.nio.file.Files;
@@ -24,6 +27,7 @@ import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ws.schild.jave.Encoder;
 import ws.schild.jave.MultimediaObject;
@@ -45,9 +49,11 @@ public class AudioService {
 
   // Concurrency settings based on Google Speech-to-Text quotas
   private static final double REQUESTS_PER_SECOND = 15.0;
-  private static final int    MAX_CONCURRENT_THREADS = 30;
+  private static final int    MAX_CONCURRENT_THREADS = 16;
   private static final long   AWAIT_TERMINATION_MINUTES = 10;
 
+  @Autowired
+  TranscriptRepository transcriptRepository;
   /**
    * Extracts audio from a video, splits into uniquely named chunks,
    * transcribes them in parallel (throttled), and returns the full transcript.
@@ -55,7 +61,7 @@ public class AudioService {
    * @param videoFile video file to process
    * @return combined transcription text, or null on failure
    */
-  public String extractAndTranscribe(File videoFile) {
+  public String extractAndTranscribe(File videoFile,Meeting meeting) {
     if (videoFile == null || !videoFile.exists()) {
       return null;
     }
@@ -82,7 +88,15 @@ public class AudioService {
       for (String part : transcripts) {
         fullTranscript.append(part).append("\n");
       }
-      return fullTranscript.toString().trim();
+
+      // Save the transcript to the database
+      String fullTranscriptText = fullTranscript.toString().trim();
+      Transcript transcriptEntity = new Transcript();
+      transcriptEntity.setMeeting(meeting);
+      transcriptEntity.setContent(fullTranscriptText );
+      transcriptRepository.save(transcriptEntity);
+
+      return fullTranscriptText;
     } catch (Exception e) {
       e.printStackTrace();
       return null;
@@ -132,12 +146,14 @@ public class AudioService {
   }
 
   private List<String> transcribeChunksConcurrently(List<File> chunkFiles) throws InterruptedException {
+    long globalStart = System.currentTimeMillis();
+
     RateLimiter limiter = RateLimiter.create(REQUESTS_PER_SECOND);
     ExecutorService exec = Executors.newFixedThreadPool(MAX_CONCURRENT_THREADS);
     List<Future<String>> futures = new ArrayList<>();
 
     for (File chunk : chunkFiles) {
-      limiter.acquire(); // throttle to avoid exceeding QPS
+      limiter.acquire();
       futures.add(exec.submit((Callable<String>) () -> {
         try {
           return transcribeAudio(chunk);
@@ -158,10 +174,19 @@ public class AudioService {
         results.add("[ERROR: " + e.getCause().getMessage() + "]");
       }
     }
+
+    long globalEnd = System.currentTimeMillis();
+    double totalSeconds = (globalEnd - globalStart) / 1000.0;
+    System.out.println("✅ "+MAX_CONCURRENT_THREADS+": Total transcription time for all chunks: " + totalSeconds + " seconds");
+
     return results;
   }
 
   private String transcribeAudio(File audioFile) throws Exception {
+    long start = System.currentTimeMillis(); // LOG EARLY
+
+    System.out.println("[" + audioFile.getName() + "] Start time: " + start);
+
     try (SpeechClient speechClient = SpeechClient.create()) {
       byte[] data = Files.readAllBytes(audioFile.toPath());
       ByteString audioBytes = ByteString.copyFrom(data);
@@ -175,8 +200,13 @@ public class AudioService {
       RecognitionAudio audio = RecognitionAudio.newBuilder()
           .setContent(audioBytes)
           .build();
-      System.out.println("Send audio to Google Speech API: " + audioFile.getName());
+
       RecognizeResponse response = speechClient.recognize(config, audio);
+
+      long end = System.currentTimeMillis();
+      double seconds = (end - start) / 1000.0;
+
+      System.out.println("[" + audioFile.getName() + "] Done in: " + seconds + " seconds");
 
       StringBuilder transcript = new StringBuilder();
       for (SpeechRecognitionResult result : response.getResultsList()) {

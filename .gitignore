@@ -37,3 +37,4 @@ build/
 ### Project files ###
 /uploads
 /voice
+/src/main/resources/application.properties

@@ -1,8 +1,13 @@
 package com.v_mom.entity;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.v_mom.util.JsonNodeConverter;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -17,8 +22,10 @@ public class Summary {
   @JoinColumn(name = "meeting_id")
   private Meeting meeting;
 
-  @Column(nullable = false, columnDefinition = "TEXT")
-  private String summaryText;
+  @Column(nullable = false, columnDefinition = "json")
+  @Convert(converter = JsonNodeConverter.class)
+  @JdbcTypeCode(SqlTypes.JSON)
+  private JsonNode MoM;
 
   @CreationTimestamp
   private LocalDateTime createdAt;
