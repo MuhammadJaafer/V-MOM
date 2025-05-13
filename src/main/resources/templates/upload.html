@@ -50,29 +50,42 @@
   <h1 class="main-title center-text">Minutes of Meeting</h1>
 
   <div class="minutes-container">
+    <div class="section meeting-info-section">
+      <h2 class="section-title">Meeting Information</h2>
+      <div id="meetingInfoContainer" class="meeting-info-content">
+        <!-- Meeting info will be rendered here by JavaScript -->
+      </div>
+    </div>
+
     <div class="section">
-      <h2 class="section-title">original text</h2>
+      <h2 class="section-title">Key Points</h2>
+      <div id="keyPointsContainer" class="key-points-content">
+        <!-- Key points will be rendered here by JavaScript -->
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Action Items</h2>
+      <div id="actionItemsContainer" class="action-items-content">
+        <!-- Action items will be rendered here by JavaScript -->
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Decisions</h2>
+      <div id="decisionsContainer" class="decisions-content">
+        <!-- Decisions will be rendered here by JavaScript -->
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Original Text</h2>
       <div class="message" th:if="${message}">
         <div class="message-content" id="originalText" th:text="${message}"></div>
         <div class="message-collapsed" id="collapsedText"></div>
         <button class="read-more-btn" id="readMoreBtn">Show more</button>
       </div>
       <a class="download-link" th:if="${audioFile}" th:href="@{'/voice/' + ${audioFile}}" download>Download Extracted Audio</a>
-    </div>
-
-    <div class="section">
-      <h2 class="section-title">Key Points</h2>
-      <!-- Empty content for demonstration -->
-    </div>
-
-    <div class="section">
-      <h2 class="section-title">Action Items</h2>
-      <!-- Empty content for demonstration -->
-    </div>
-
-    <div class="section">
-      <h2 class="section-title">Decisions</h2>
-      <!-- Empty content for demonstration -->
     </div>
   </div>
 

@@ -37,8 +37,9 @@ public class SecurityConfig {
             )
             .formLogin(form -> form
                     .loginPage("/login")
-                    .defaultSuccessUrl("/upload")
+                    .defaultSuccessUrl("/upload", true)
                     .failureHandler(authFailureHandler)
+                    .successHandler((request, response, authentication) -> response.sendRedirect("/upload"))
             )
             .logout(logout -> logout
                     .logoutSuccessUrl("/?logout")
