@@ -2,6 +2,7 @@ package com.v_mom.service;
 
 import com.v_mom.entity.User;
 import com.v_mom.repository.UserRepository;
+import com.v_mom.security.CustomEmailNotFoundException;
 import com.v_mom.security.CustomUserDetails;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -19,7 +20,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) {
         User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new CustomEmailNotFoundException("User with email " + email + " not found"));
 
         return new CustomUserDetails(user);
     }
