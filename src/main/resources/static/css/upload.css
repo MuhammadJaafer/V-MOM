@@ -17,6 +17,10 @@ body {
     padding: 3.0rem;
     display: flex;
     flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
 }
 
 .main-content {
@@ -25,6 +29,7 @@ body {
     color: white;
     padding: 3.0rem;
     overflow-y: auto;
+    height: 100vh;
 }
 
 .logo {

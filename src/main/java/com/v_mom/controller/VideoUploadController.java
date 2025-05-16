@@ -29,6 +29,7 @@ public class VideoUploadController {
   @Autowired private MeetingRepository meetingRepository;
   private static final String REDIRECT_HOME = "redirect:/upload";
   private static final String MESSAGE_ATTR = "message";
+  private static final String ORIGINAL_TEXT_ATTR = "originalText";
   private final AudioService audioService;
   private final SummaryService summaryService;
 
@@ -118,6 +119,7 @@ public class VideoUploadController {
 
     // Convert video to audio
     String Text = audioService.extractAndTranscribe(videoFile, meeting);
+    redirectAttributes.addFlashAttribute(ORIGINAL_TEXT_ATTR, Text);
     String summary = LLMService.summarizeTranscript(Text);
     summaryService.saveSummary(meeting,summary);
 
