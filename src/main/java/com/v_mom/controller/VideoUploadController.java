@@ -2,7 +2,11 @@ package com.v_mom.controller;
 
 import com.v_mom.entity.Meeting;
 import com.v_mom.entity.User;
+import com.v_mom.entity.Summary;
+import com.v_mom.entity.Transcript;
 import com.v_mom.repository.MeetingRepository;
+import com.v_mom.repository.SummaryRepository;
+import com.v_mom.repository.TranscriptRepository;
 import com.v_mom.security.CustomUserDetails;
 import com.v_mom.service.AudioService;
 import com.v_mom.service.LLMService;
@@ -11,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,7 +32,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 public class VideoUploadController {
   @Autowired private MeetingRepository meetingRepository;
+  @Autowired private TranscriptRepository transcriptRepository;
+  @Autowired private SummaryRepository summaryRepository;
   private static final String REDIRECT_HOME = "redirect:/upload";
+  private static final String UPLOAD_VIEW = "upload";
   private static final String MESSAGE_ATTR = "message";
   private static final String ORIGINAL_TEXT_ATTR = "originalText";
   private final AudioService audioService;
@@ -43,8 +51,44 @@ public class VideoUploadController {
   }
 
   @GetMapping("/upload")
-  public String home() {
-    return "upload";
+  public String home(@RequestParam(required = false) Long meetingId, Model model) {
+    // Check if a specific meeting was requested
+    if (meetingId != null) {
+      loadExistingMeeting(meetingId, model);
+    }
+
+    return UPLOAD_VIEW;
+  }
+
+  /**
+   * Load an existing meeting's data
+   *
+   * @param meetingId The ID of the meeting to load
+   * @param model The Spring model to add attributes to
+   */
+  private void loadExistingMeeting(Long meetingId, Model model) {
+    // Get the currently authenticated user
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
+    User currentUser = customUserDetails.getUser();
+
+    // Find the requested meeting
+    Meeting meeting = meetingRepository.findByMeetingId(meetingId);
+
+    // Verify the meeting exists and belongs to the current user
+    if (meeting != null && meeting.getUser().getUserId().equals(currentUser.getUserId())) {
+      // Find the transcript for this meeting
+      Optional<Transcript> transcript = transcriptRepository.findByMeeting(meeting);
+      if (transcript.isPresent()) {
+        model.addAttribute(ORIGINAL_TEXT_ATTR, transcript.get().getContent());
+      }
+
+      // Find the summary for this meeting
+      Optional<Summary> summary = summaryRepository.findByMeeting(meeting);
+      if (summary.isPresent()) {
+        model.addAttribute(MESSAGE_ATTR, summary.get().getMoM().toString());
+      }
+    }
   }
 
   @PostMapping("/upload")

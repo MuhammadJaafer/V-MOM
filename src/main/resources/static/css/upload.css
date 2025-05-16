@@ -11,7 +11,7 @@ body {
 }
 
 .sidebar {
-    width: 35%;
+    width: 25%;
     background-color: #1E2124;
     color: white;
     padding: 3.0rem;
@@ -24,7 +24,7 @@ body {
 }
 
 .main-content {
-    width: 65%;
+    width: 75%;
     background-color: #36393E;
     color: white;
     padding: 3.0rem;
@@ -446,4 +446,142 @@ button[type="submit"]:hover {
 .status-done {
     background-color: rgba(67, 181, 129, 0.2);
     color: #43b581;
+}
+
+/* Meeting History Sidebar Styles */
+.history-sidebar {
+    position: fixed;
+    top: 0;
+    right: -25rem; /* Start off-screen */
+    width: 25rem;
+    height: 100vh;
+    background-color: #1E2124;
+    color: white;
+    padding: 2rem;
+    z-index: 1000;
+    overflow-y: auto;
+    transition: right 0.3s ease;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.history-sidebar.active {
+    right: 0; /* Slide in */
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #36393E;
+}
+
+.history-title {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #5865F2;
+}
+
+#history-toggle-btn {
+    position: fixed;
+    right: 2rem;
+    top: 2rem;
+    background-color: #5865F2;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 4rem;
+    height: 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1001;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+#history-toggle-btn::before {
+    content: "≡"; /* Hamburger menu icon */
+    font-size: 2.4rem;
+    transition: transform 0.3s ease;
+}
+
+#history-toggle-btn.open::before {
+    content: "✕"; /* Close icon */
+    font-size: 1.8rem;
+}
+
+#history-toggle-btn:hover {
+    background-color: #4651c2;
+}
+
+.meeting-history-item {
+    background-color: #36393E;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.meeting-history-item:hover {
+    transform: translateY(-2px);
+    background-color: #42464D;
+}
+
+.meeting-history-title {
+    font-size: 1.6rem;
+    font-weight: 500;
+    color: #FFFFFF;
+    margin-bottom: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.meeting-history-date {
+    font-size: 1.2rem;
+    color: #a0a0a0;
+}
+
+.history-empty, .history-error {
+    text-align: center;
+    padding: 3rem 0;
+    color: #a0a0a0;
+    font-size: 1.4rem;
+}
+
+.history-error {
+    color: #f04747;
+}
+
+/* Adjust main content when sidebar is active */
+.main-content.sidebar-active {
+    width: calc(75% - 25rem);
+    transition: width 0.3s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .history-sidebar {
+        width: 25rem;
+        right: -25rem;
+    }
+
+    .main-content.sidebar-active {
+        width: calc(65% - 25rem);
+    }
+}
+
+@media (max-width: 768px) {
+    .history-sidebar {
+        width: 100%;
+        right: -100%;
+    }
+
+    .main-content.sidebar-active {
+        width: 65%;
+    }
 }
