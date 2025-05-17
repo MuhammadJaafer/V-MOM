@@ -10,15 +10,20 @@ import com.v_mom.repository.TranscriptRepository;
 import com.v_mom.security.CustomUserDetails;
 import com.v_mom.service.AudioService;
 import com.v_mom.service.LLMService;
+import com.v_mom.service.SummaryCacheService;
 import com.v_mom.service.SummaryService;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -26,6 +31,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -34,20 +40,23 @@ public class VideoUploadController {
   @Autowired private MeetingRepository meetingRepository;
   @Autowired private TranscriptRepository transcriptRepository;
   @Autowired private SummaryRepository summaryRepository;
-  private static final String REDIRECT_HOME = "redirect:/upload";
+
+  private static final String REDIRECT_UPLOAD = "redirect:/upload";
   private static final String UPLOAD_VIEW = "upload";
   private static final String MESSAGE_ATTR = "message";
   private static final String ORIGINAL_TEXT_ATTR = "originalText";
   private final AudioService audioService;
   private final SummaryService summaryService;
-
+  private final SummaryCacheService summaryCacheService;
   @Value("${upload.dir}")
   private String uploadDir;
 
   @Autowired
-  public VideoUploadController(AudioService audioService, SummaryService summaryService) {
+  public VideoUploadController(AudioService audioService, SummaryService summaryService,
+      SummaryCacheService summaryCacheService)  {
     this.audioService = audioService;
     this.summaryService = summaryService;
+  this.summaryCacheService = summaryCacheService;
   }
 
   @GetMapping("/upload")
@@ -91,30 +100,61 @@ public class VideoUploadController {
     }
   }
 
-  @PostMapping("/upload")
-  public String handleFileUpload(
-      @RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes) {
-
-    if (file.isEmpty()) {
-      addMessage(redirectAttributes, "Please select a file to upload.");
-      return REDIRECT_HOME;
+  @GetMapping("/poll-summary")
+  @ResponseBody
+  public ResponseEntity<?> pollSummary(@RequestParam("uuid") String uuid) {
+    if (summaryCacheService.isSummaryReady(uuid)) {
+      String summary = summaryCacheService.retrieveAndRemoveSummary(uuid);
+      return ResponseEntity.ok(Map.of("status", "done", "summary", summary));
     }
+
+    Integer percent = summaryCacheService.getProgress(uuid);
+    if (percent == null) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(Map.of("status", "not_found", "message", "Invalid or expired UUID"));
+    }
+
+    return ResponseEntity.ok(Map.of("status", "processing", "progress", percent));
+  }
+
+  @PostMapping("/upload")
+  @ResponseBody
+  public ResponseEntity<String> handleFileUpload(@RequestParam("file") MultipartFile file) {
+    if (file.isEmpty()) {
+      return ResponseEntity.badRequest().body("File is empty.");
+    }
+
+    // Generate unique file name
+    String uuid = UUID.randomUUID().toString();
+    String uniqueFileName = uuid + "-" + file.getOriginalFilename();
 
     try {
       // Save the uploaded file
-      File savedFile = saveUploadedFile(file);
+      File savedFile = saveUploadedFile(file, uniqueFileName);
 
-      // Process the video file
-      processVideoFile(savedFile, file.getOriginalFilename(), redirectAttributes);
+      // Capture the current authentication object
+      Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+      // Run processing in background (async) and pass auth object
+      CompletableFuture.runAsync(() -> {
+        try {
+          SecurityContextHolder.setContext(SecurityContextHolder.createEmptyContext());
+          SecurityContextHolder.getContext().setAuthentication(authentication);
+
+          processVideoFile(savedFile, file.getOriginalFilename(), uuid);
+        } catch (Exception e) {
+          e.printStackTrace(); // or use a logger
+        }
+      });
+      summaryCacheService.setProgress(uuid, 5);
+      // Return just the UUID part
+      return ResponseEntity.ok(uuid);
 
     } catch (IOException e) {
-      addMessage(redirectAttributes, "File upload failed: " + e.getMessage());
-    } catch (Exception e) {
-      addMessage(redirectAttributes, "Can't convert video to audio: " + e.getMessage());
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Upload failed: " + e.getMessage());
     }
-
-    return REDIRECT_HOME;
   }
+
 
   /**
    * Saves the uploaded file to the file system
@@ -123,9 +163,7 @@ public class VideoUploadController {
    * @return The saved file
    * @throws IOException If file saving fails
    */
-  private File saveUploadedFile(MultipartFile file) throws IOException {
-    // Generate unique filename
-    String uniqueFileName = UUID.randomUUID() + "-" + file.getOriginalFilename();
+  private File saveUploadedFile(MultipartFile file, String uniqueFileName ) throws IOException {
     Path uploadPath = Paths.get(uploadDir, uniqueFileName);
 
     // Create directory if it doesn't exist
@@ -140,38 +178,27 @@ public class VideoUploadController {
     return uploadPath.toFile();
   }
 
-  /**
-   * Processes the video file to extract audio
-   *
-   * @param videoFile The video file to process
-   * @param originalFilename The original filename
-   * @param redirectAttributes Redirect attributes for flash messages
-   */
-  private void processVideoFile(
-      File videoFile, String originalFilename, RedirectAttributes redirectAttributes) {
-
-    // Get the currently authenticated user
+  private void processVideoFile(File videoFile, String originalFilename, String uuid) {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
     User user = customUserDetails.getUser();
 
-    // Save the meeting information to the database
     Meeting meeting = new Meeting();
-    meeting.setTitle(originalFilename); // or set other fields as needed
-    meeting.setUser(user); // set the authenticated user
+    meeting.setTitle(originalFilename);
+    meeting.setUser(user);
     meetingRepository.save(meeting);
 
-    // Convert video to audio
-    String Text = audioService.extractAndTranscribe(videoFile, meeting);
-    redirectAttributes.addFlashAttribute(ORIGINAL_TEXT_ATTR, Text);
-    String summary = LLMService.summarizeTranscript(Text);
-    summaryService.saveSummary(meeting,summary);
+    summaryCacheService.setProgress(uuid, 25);
+    String text = audioService.extractAndTranscribe(videoFile, meeting);
+    summaryCacheService.setProgress(uuid, 60);
 
-    if (!Text.isEmpty()) {
-      addMessage(redirectAttributes, summary);
-    } else {
-      addMessage(redirectAttributes, "Video conversion failed");
-    }
+    String summary = LLMService.summarizeTranscript(text);
+    summaryCacheService.setProgress(uuid, 90);
+
+    summaryService.saveSummary(meeting, summary);
+    summaryCacheService.storeSummary(uuid, summary);
+
+    summaryCacheService.removeProgress(uuid);
   }
 
   /**
@@ -181,6 +208,6 @@ public class VideoUploadController {
    * @param message The message to add
    */
   private void addMessage(RedirectAttributes redirectAttributes, String message) {
-    redirectAttributes.addFlashAttribute(MESSAGE_ATTR, message);
+//    redirectAttributes.addFlashAttribute(MESSAGE_ATTR, message);
   }
 }

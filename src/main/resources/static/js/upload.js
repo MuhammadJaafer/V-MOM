@@ -4,10 +4,78 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Handle file upload functionality
     setupFileUploadFunctionality();
+    //set up File submission
+    setupFileSubmission();
 
-    // Parse and render meeting data from the JSON
-    parseMeetingData();
 });
+
+function setupFileSubmission() {
+    const fileInput = document.getElementById('fileInput');
+    const submitButton = document.getElementById('submit-button');
+
+    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+    if (fileInput && submitButton) {
+        submitButton.addEventListener('click', async function () {
+            if (fileInput.files.length === 0) {
+                console.error('No file selected for submission.');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        [csrfHeader]: csrfToken
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error("Upload failed with status " + response.status);
+                }
+
+                const uuid = await response.text(); // the UUID returned from server
+                console.log("Upload successful, UUID:", uuid);
+
+                const interval = setInterval(() => {
+                    fetch(`/poll-summary?uuid=${uuid}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.status === "done") {
+                                clearInterval(interval);
+                                console.log("Summary:", data.summary);
+                                parseMeetingData(data.summary);
+                            } else if (data.status === "processing") {
+                                console.log("Progress:", data.progress + "%");
+                            } else if (data.status === "not_found") {
+                                clearInterval(interval);
+                                console.log("Summary not found or expired.");
+                            }
+                        })
+                        .catch(err => {
+                            clearInterval(interval);
+                            console.error("Polling error", err);
+                        });
+                }, 500);
+
+            } catch (error) {
+                console.error('Error during upload:', error);
+            }
+        });
+    }
+}
+
+
+
+function getProgressBarData() {
+
+}
 
 function setupReadMoreFunctionality() {
     // Get the elements
@@ -185,14 +253,12 @@ function setupFileUploadFunctionality() {
     }
 }
 
-function parseMeetingData() {
-     const originalText = document.getElementById('summaryText');
-        if (!originalText) return;
+function parseMeetingData(data) {
+        if (!data) return;
 
         try {
-            let jsonContent = originalText.textContent;
             // Clean JSON string from markdown syntax
-            jsonContent = jsonContent.replace(/```json/g, '').replace(/```/g, '').trim();
+            const jsonContent = data.replace(/```json/g, '').replace(/```/g, '').trim();
 
             const meetingData = JSON.parse(jsonContent);
             renderMeetingInfo(meetingData.meetingInfo);
