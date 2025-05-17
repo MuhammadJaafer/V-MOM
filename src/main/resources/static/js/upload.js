@@ -186,7 +186,7 @@ function setupFileUploadFunctionality() {
 }
 
 function parseMeetingData() {
-     const originalText = document.getElementById('originalText');
+     const originalText = document.getElementById('summaryText');
         if (!originalText) return;
 
         try {

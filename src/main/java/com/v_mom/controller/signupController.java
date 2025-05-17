@@ -34,14 +34,15 @@ public class signupController {
             @RequestParam("password") String password,
             RedirectAttributes redirectAttributes
     ) {
-        if (userRepository.findByEmail(email).isPresent()) {
+        String normalizedEmail = email.toLowerCase();
+        if (userRepository.findByEmail(normalizedEmail).isPresent()) {
             redirectAttributes.addFlashAttribute("emailExists", true);
             return "redirect:/signup";
         }
 
         User newUser = new User();
         newUser.setUsersName(name);
-        newUser.setEmail(email);
+        newUser.setEmail(normalizedEmail);
         newUser.setPassword(passwordEncoder.encode(password));
         userRepository.save(newUser);
 

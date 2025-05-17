@@ -19,6 +19,19 @@
   <title>V-MoM - Minutes of Meeting</title>
 </head>
 <body>
+<!-- Meeting History Toggle Button -->
+<button id="history-toggle-btn" aria-label="Toggle meeting history" aria-expanded="false"></button>
+
+<!-- Meeting History Sidebar -->
+<div id="meeting-history-sidebar" class="history-sidebar">
+  <div class="history-header">
+    <div class="history-title">Meeting History</div>
+  </div>
+  <div id="meeting-history-list">
+    <!-- Meeting history items will be loaded here dynamically -->
+    <div class="history-empty">Loading your meetings...</div>
+  </div>
+</div>
 <div class="sidebar">
   <div class="logo">V-MoM</div>
 
@@ -80,10 +93,13 @@
 
     <div class="section">
       <h2 class="section-title">Original Text</h2>
-      <div class="message" th:if="${message}">
-        <div class="message-content" id="originalText" th:text="${message}"></div>
+      <div class="message" th:if="${originalText}">
+        <div class="message-content" id="originalText" th:text="${originalText}"></div>
         <div class="message-collapsed" id="collapsedText"></div>
         <button class="read-more-btn" id="readMoreBtn">Show more</button>
+      </div>
+      <div class="message" th:if="${message}" style="display: none;">
+        <div class="message-content" id="summaryText" th:text="${message}"></div>
       </div>
       <a class="download-link" th:if="${audioFile}" th:href="@{'/voice/' + ${audioFile}}" download>Download Extracted Audio</a>
     </div>
@@ -95,5 +111,6 @@
   </div>
 </div>
 <script th:src="@{/js/upload.js}"></script>
+<script th:src="@{/js/meetingHistory.js}"></script>
 </body>
 </html>
