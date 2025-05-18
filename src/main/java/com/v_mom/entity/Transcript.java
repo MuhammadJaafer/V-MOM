@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 @Data
 public class Transcript {
   @Id
+  @Column(nullable = false, columnDefinition = "TEXT")
   private String transcriptId;
 
   @ManyToOne(optional = false)
