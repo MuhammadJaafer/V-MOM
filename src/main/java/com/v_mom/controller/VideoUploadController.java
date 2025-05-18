@@ -105,6 +105,7 @@ public class VideoUploadController {
   public ResponseEntity<?> pollSummary(@RequestParam("uuid") String uuid) {
     if (summaryCacheService.isSummaryReady(uuid)) {
       String summary = summaryCacheService.retrieveAndRemoveSummary(uuid);
+//      String originalText = summaryCacheService.getOriginalText(uuid);
       return ResponseEntity.ok(Map.of("status", "done", "summary", summary));
     }
 
