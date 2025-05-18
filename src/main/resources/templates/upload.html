@@ -59,9 +59,9 @@
 </div>
 
 <div class="main-content">
-  <h1 th:classappend="${originalText != null} ? 'visible' : 'hidden'">Minutes of Meeting</h1>
+  <h1 th:classappend="hidden">Minutes of Meeting</h1>
 
-  <div th:classappend="${originalText != null} ? 'visible' : 'hidden'" class="minutes-container" >
+  <div th:classappend="hidden" class="minutes-container" >
     <div class="section meeting-info-section">
       <h2 class="section-title">Meeting Information</h2>
       <div id="meetingInfoContainer" class="meeting-info-content">
@@ -92,18 +92,18 @@
 
     <div class="section">
       <h2 class="section-title">Original Text</h2>
-      <div class="message" th:if="${originalText}">
-        <div class="message-content" id="originalText" th:text="${originalText}"></div>
+      <div class="message">
+        <div class="message-content" id="originalText"></div>
         <div class="message-collapsed" id="collapsedText"></div>
         <button class="read-more-btn" id="readMoreBtn">Show more</button>
       </div>
       <div class="message" th:if="${message}" style="display: none;">
         <div class="message-content" id="summaryText" th:text="${message}"></div>
       </div>
-      <a class="download-link" th:if="${audioFile}" th:href="@{'/voice/' + ${audioFile}}" download>Download Extracted Audio</a>
     </div>
+
   </div>
-  <div th:classappend="${originalText == null} ? 'visible' : 'hidden'" class="welcome-container">
+  <div th:classappend="visible" class="welcome-container">
     <div class="welcome-header">
       <h2>Welcome to V-MoM</h2>
       <p>Your intelligent meeting minutes generator</p>
@@ -157,8 +157,7 @@
     </div>
   </div>
 
-  <div class="button-container"  th:classappend="${originalText != null} ? 'visible' : 'hidden'">
-    <button class="button">Edit</button>
+  <div class="button-container"  th:classappend="hidden">
     <button class="button">Export</button>
   </div>
 </div>

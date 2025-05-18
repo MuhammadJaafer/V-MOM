@@ -267,6 +267,8 @@ h2 {
 .step-arrow {
     color: #5865F2;
     font-size: 2.0rem;
+    align-self: start;
+    margin-top: 1rem;
 }
 
 /* Responsive adjustments */

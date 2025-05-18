@@ -10,8 +10,7 @@ import java.time.LocalDateTime;
 @Data
 public class Transcript {
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long transcriptId;
+  private String transcriptId;
 
   @ManyToOne(optional = false)
   @JoinColumn(name = "meeting_id")

@@ -61,7 +61,7 @@ public class AudioService {
    * @param videoFile video file to process
    * @return combined transcription text, or null on failure
    */
-  public String extractAndTranscribe(File videoFile,Meeting meeting) {
+  public String extractAndTranscribe(File videoFile,Meeting meeting, String uuid) {
     if (videoFile == null || !videoFile.exists()) {
       return null;
     }
@@ -92,6 +92,7 @@ public class AudioService {
       // Save the transcript to the database
       String fullTranscriptText = fullTranscript.toString().trim();
       Transcript transcriptEntity = new Transcript();
+      transcriptEntity.setTranscriptId(uuid);
       transcriptEntity.setMeeting(meeting);
       transcriptEntity.setContent(fullTranscriptText );
       transcriptRepository.save(transcriptEntity);

@@ -105,8 +105,8 @@ public class VideoUploadController {
   public ResponseEntity<?> pollSummary(@RequestParam("uuid") String uuid) {
     if (summaryCacheService.isSummaryReady(uuid)) {
       String summary = summaryCacheService.retrieveAndRemoveSummary(uuid);
-//      String originalText = summaryCacheService.getOriginalText(uuid);
-      return ResponseEntity.ok(Map.of("status", "done", "summary", summary));
+      Transcript transcript = transcriptRepository.findByTranscriptId(uuid);
+      return ResponseEntity.ok(Map.of("status", "done", "summary", summary,"originalText", transcript.getContent()));
     }
 
     Integer percent = summaryCacheService.getProgress(uuid);
@@ -190,7 +190,7 @@ public class VideoUploadController {
     meetingRepository.save(meeting);
 
     summaryCacheService.setProgress(uuid, 25);
-    String text = audioService.extractAndTranscribe(videoFile, meeting);
+    String text = audioService.extractAndTranscribe(videoFile, meeting,uuid);
     summaryCacheService.setProgress(uuid, 60);
 
     String summary = LLMService.summarizeTranscript(text);

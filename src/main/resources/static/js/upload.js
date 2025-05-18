@@ -204,13 +204,17 @@ function setupFileSubmission() {
                                    // Show minutes container
 
                                     const minutesContainer = document.querySelector('.minutes-container');
+                                    const btnContainer = document.querySelector('.button-container');
                                        if (minutesContainer) {
                                            minutesContainer.classList.remove('hidden');
                                            minutesContainer.classList.add('visible');
+                                           btnContainer.classList.remove('hidden');
+                                            btnContainer.classList.add('visible');
                                        }
-                                     document.getElementById('originalText').textContent = data.originalText;
+
                                    // Parse data once
                                    parseMeetingData(data.summary);
+                                   document.getElementById('originalText').textContent = data.originalText;
                                 }
                              else if (data.status === "processing") {
                                 // Update progress based on server response
