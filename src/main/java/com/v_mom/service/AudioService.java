@@ -54,6 +54,8 @@ public class AudioService {
 
   @Autowired
   TranscriptRepository transcriptRepository;
+  @Autowired
+  private SummaryCacheService summaryCacheService;
   /**
    * Extracts audio from a video, splits into uniquely named chunks,
    * transcribes them in parallel (throttled), and returns the full transcript.
@@ -79,15 +81,18 @@ public class AudioService {
 
       // 2) Split WAV into uniquely named chunks
       List<File> chunkFiles = splitWavFile(wavFile, baseName, CHUNK_DURATION, chunksDir);
+      summaryCacheService.incrementProgress(uuid,5);
+      Double numberOfChunks = (double) chunkFiles.size();
 
       // 3) Transcribe chunks in parallel with rate limiting
-      List<String> transcripts = transcribeChunksConcurrently(chunkFiles);
+      List<String> transcripts = transcribeChunksConcurrently(chunkFiles,uuid,numberOfChunks);
 
       // 4) Stitch together
       StringBuilder fullTranscript = new StringBuilder();
       for (String part : transcripts) {
         fullTranscript.append(part).append("\n");
       }
+      summaryCacheService.incrementProgress(uuid,5);
 
       // Save the transcript to the database
       String fullTranscriptText = fullTranscript.toString().trim();
@@ -146,7 +151,7 @@ public class AudioService {
     return chunks;
   }
 
-  private List<String> transcribeChunksConcurrently(List<File> chunkFiles) throws InterruptedException {
+  private List<String> transcribeChunksConcurrently(List<File> chunkFiles,String uuid , Double numberOfChunks) throws InterruptedException {
     long globalStart = System.currentTimeMillis();
 
     RateLimiter limiter = RateLimiter.create(REQUESTS_PER_SECOND);
@@ -157,7 +162,7 @@ public class AudioService {
       limiter.acquire();
       futures.add(exec.submit((Callable<String>) () -> {
         try {
-          return transcribeAudio(chunk);
+          return transcribeAudio(chunk,uuid,numberOfChunks);
         } catch (Exception e) {
           throw new RuntimeException("Transcription failed for " + chunk.getName(), e);
         }
@@ -179,11 +184,10 @@ public class AudioService {
     long globalEnd = System.currentTimeMillis();
     double totalSeconds = (globalEnd - globalStart) / 1000.0;
     System.out.println("✅ "+MAX_CONCURRENT_THREADS+": Total transcription time for all chunks: " + totalSeconds + " seconds");
-
     return results;
   }
 
-  private String transcribeAudio(File audioFile) throws Exception {
+  private String transcribeAudio(File audioFile,String uuid, Double numberOfChunks) throws Exception {
     long start = System.currentTimeMillis(); // LOG EARLY
 
     System.out.println("[" + audioFile.getName() + "] Start time: " + start);
@@ -204,16 +208,20 @@ public class AudioService {
 
       RecognizeResponse response = speechClient.recognize(config, audio);
 
-      long end = System.currentTimeMillis();
-      double seconds = (end - start) / 1000.0;
-
-      System.out.println("[" + audioFile.getName() + "] Done in: " + seconds + " seconds");
 
       StringBuilder transcript = new StringBuilder();
       for (SpeechRecognitionResult result : response.getResultsList()) {
         SpeechRecognitionAlternative alt = result.getAlternativesList().get(0);
         transcript.append(alt.getTranscript()).append("\n");
       }
+
+      long end = System.currentTimeMillis();
+      double seconds = (end - start) / 1000.0;
+
+      System.out.println("[" + audioFile.getName() + "] Done in: " + seconds + " seconds");
+
+      summaryCacheService.incrementProgress(uuid,60/numberOfChunks);
+      System.out.println("Current Progress: " + summaryCacheService.getProgress(uuid) + "%");
       return transcript.toString().trim();
     }
   }

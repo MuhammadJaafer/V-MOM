@@ -106,10 +106,11 @@ public class VideoUploadController {
     if (summaryCacheService.isSummaryReady(uuid)) {
       String summary = summaryCacheService.retrieveAndRemoveSummary(uuid);
       Transcript transcript = transcriptRepository.findByTranscriptId(uuid);
+      System.out.println(transcript.getContent());
       return ResponseEntity.ok(Map.of("status", "done", "summary", summary,"originalText", transcript.getContent()));
     }
 
-    Integer percent = summaryCacheService.getProgress(uuid);
+    Double percent = summaryCacheService.getProgress(uuid);
     if (percent == null) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND)
           .body(Map.of("status", "not_found", "message", "Invalid or expired UUID"));
@@ -131,7 +132,9 @@ public class VideoUploadController {
 
     try {
       // Save the uploaded file
+      summaryCacheService.incrementProgress(uuid,5);
       File savedFile = saveUploadedFile(file, uniqueFileName);
+      summaryCacheService.incrementProgress(uuid, 10);
 
       // Capture the current authentication object
       Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -147,7 +150,6 @@ public class VideoUploadController {
           e.printStackTrace(); // or use a logger
         }
       });
-      summaryCacheService.setProgress(uuid, 5);
       // Return just the UUID part
       return ResponseEntity.ok(uuid);
 
@@ -189,12 +191,11 @@ public class VideoUploadController {
     meeting.setUser(user);
     meetingRepository.save(meeting);
 
-    summaryCacheService.setProgress(uuid, 25);
+    summaryCacheService.incrementProgress(uuid, 5);
     String text = audioService.extractAndTranscribe(videoFile, meeting,uuid);
-    summaryCacheService.setProgress(uuid, 60);
 
     String summary = LLMService.summarizeTranscript(text);
-    summaryCacheService.setProgress(uuid, 90);
+    summaryCacheService.incrementProgress(uuid,15);
 
     summaryService.saveSummary(meeting, summary);
     summaryCacheService.storeSummary(uuid, summary);

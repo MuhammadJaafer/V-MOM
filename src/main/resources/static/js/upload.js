@@ -19,74 +19,6 @@ function checkForExistingMeeting() {
     }
 }
 
-//function setupFileSubmission() {
-//    const fileInput = document.getElementById('fileInput');
-//    const submitButton = document.getElementById('submit-button');
-//
-//    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-//    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-//
-//    if (fileInput && submitButton) {
-//        submitButton.addEventListener('click', async function () {
-//            if (fileInput.files.length === 0) {
-//                console.error('No file selected for submission.');
-//                return;
-//            }
-//
-//            const file = fileInput.files[0];
-//            const formData = new FormData();
-//            formData.append("file", file);
-//
-//            try {
-//                const response = await fetch('/upload', {
-//                    method: 'POST',
-//                    body: formData,
-//                    headers: {
-//                        [csrfHeader]: csrfToken
-//                    }
-//                });
-//
-//                if (!response.ok) {
-//                    throw new Error("Upload failed with status " + response.status);
-//                }
-//
-//                const uuid = await response.text(); // the UUID returned from server
-//                console.log("Upload successful, UUID:", uuid);
-//
-//                const interval = setInterval(() => {
-//                    fetch(`/poll-summary?uuid=${uuid}`)
-//                        .then(res => res.json())
-//                        .then(data => {
-//                            if (data.status === "done") {
-//                                clearInterval(interval);
-//                                console.log("Summary:", data.summary);
-//                                parseMeetingData(data.summary);
-//                            } else if (data.status === "processing") {
-//                                console.log("Progress:", data.progress + "%");
-//                            } else if (data.status === "not_found") {
-//                                clearInterval(interval);
-//                                console.log("Summary not found or expired.");
-//                            }
-//                        })
-//                        .catch(err => {
-//                            clearInterval(interval);
-//                            console.error("Polling error", err);
-//                        });
-//                }, 500);
-//
-//            } catch (error) {
-//                console.error('Error during upload:', error);
-//            }
-//        });
-//    }
-//}
-//
-//
-//
-//function getProgressBarData() {
-//
-//}
-
 
 function setupFileSubmission() {
     const fileInput = document.getElementById('fileInput');
@@ -146,7 +78,9 @@ function setupFileSubmission() {
                     <div class="progress-message" id="progress-message">Starting upload...</div>
                 `;
 
-                // Replace welcome container with progress container
+                // if it exist Replace welcome container with progress container
+                //else repalce the summary container
+
                 welcomeContainer.parentNode.replaceChild(progressContainer, welcomeContainer);
 
                 // Initialize progress bar
@@ -177,8 +111,8 @@ function setupFileSubmission() {
                 // Update progress UI after successful upload
                 updateProgressStep('transcribing');
                 document.getElementById('progress-message').innerText = "Processing audio from video...";
-                document.getElementById('progress-bar').style.width = "25%";
-                document.getElementById('progress-percentage').innerText = "25%";
+                document.getElementById('progress-bar').style.width = "10%";
+                document.getElementById('progress-percentage').innerText = "10%";
 
                 const interval = setInterval(() => {
                     fetch(`/poll-summary?uuid=${uuid}`)
@@ -219,16 +153,16 @@ function setupFileSubmission() {
                              else if (data.status === "processing") {
                                 // Update progress based on server response
                                 const progress = data.progress || 0;
-                                const progressValue = Math.min(25 + (progress * 0.75), 99); // Scale progress between 25-99%
+                                console.log("Progress:", progress + "%");
 
-                                document.getElementById('progress-bar').style.width = progressValue + "%";
-                                document.getElementById('progress-percentage').innerText = Math.round(progressValue) + "%";
+                                document.getElementById('progress-bar').style.width = progress + "%";
+                                document.getElementById('progress-percentage').innerText = Math.round(progress) + "%";
 
                                 // Update step based on progress
-                                if (progress < 33) {
+                                if (progress < 25) {
                                     updateProgressStep('transcribing');
                                     document.getElementById('progress-message').innerText = "Transcribing audio...";
-                                } else if (progress < 66) {
+                                } else if (progress < 75) {
                                     updateProgressStep('analyzing');
                                     document.getElementById('progress-message').innerText = "Analyzing meeting content...";
                                 } else {

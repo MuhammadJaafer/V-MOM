@@ -12,16 +12,26 @@ import java.util.concurrent.*;
 public class SummaryCacheService {
 
   private final Map<String, String> summaries = new ConcurrentHashMap<>();
-  private final Map<String, Integer> progress = new ConcurrentHashMap<>();
+  private final Map<String, Double> progress = new ConcurrentHashMap<>();
   private final Map<String, Instant> summaryTimestamps = new ConcurrentHashMap<>();
   private final ScheduledExecutorService cleaner = Executors.newSingleThreadScheduledExecutor();
 
-  // Add or update progress
-  public void setProgress(String uuid, int percent) {
+  public void setProgress(String uuid, Double percent) {
     progress.put(uuid, percent);
   }
 
-  public Integer getProgress(String uuid) {
+  public void incrementProgress(String uuid, double increment) {
+    if(increment < 0) {
+      throw new IllegalArgumentException("Increment must be non-negative");
+    }
+    if(!progress.containsKey(uuid)) {
+      progress.put(uuid, 0.0);
+    }
+
+    progress.merge(uuid, increment, Double::sum);
+  }
+
+  public Double getProgress(String uuid) {
     return progress.get(uuid);
   }
 
