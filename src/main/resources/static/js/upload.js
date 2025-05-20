@@ -6,12 +6,25 @@ document.addEventListener('DOMContentLoaded', function() {
     setupFileUploadFunctionality();
     //set up File submission
     setupFileSubmission();
+    checkForExistingMeeting();
 
 });
+
+
+function checkForExistingMeeting() {
+    const summaryTextElement = document.getElementById('summaryText');
+    if (summaryTextElement && summaryTextElement.textContent.trim()) {
+        console.log("Found existing meeting summary, parsing...");
+        parseMeetingData(summaryTextElement.textContent);
+    }
+}
+
 
 function setupFileSubmission() {
     const fileInput = document.getElementById('fileInput');
     const submitButton = document.getElementById('submit-button');
+    const mainContent = document.querySelector('.main-content');
+    const welcomeContainer = document.querySelector('.welcome-container');
 
     const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
@@ -26,6 +39,58 @@ function setupFileSubmission() {
             const file = fileInput.files[0];
             const formData = new FormData();
             formData.append("file", file);
+
+            // Show loading UI
+            if (welcomeContainer) {
+                // Create progress container
+                const progressContainer = document.createElement('div');
+                progressContainer.className = 'progress-container';
+                progressContainer.innerHTML = `
+                    <div class="progress-header">
+                        <h2>Processing Your Meeting</h2>
+                        <p>Please wait while we analyze your video</p>
+                    </div>
+                    <div class="progress-animation">
+                        <div class="progress-circle"></div>
+                    </div>
+                    <div class="progress-steps">
+                        <div class="progress-step active" id="step-uploading">
+                            <div class="step-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                            <div class="step-text">Uploading</div>
+                        </div>
+                        <div class="progress-step" id="step-transcribing">
+                            <div class="step-icon"><i class="fas fa-file-alt"></i></div>
+                            <div class="step-text">Transcribing</div>
+                        </div>
+                        <div class="progress-step" id="step-analyzing">
+                            <div class="step-icon"><i class="fas fa-brain"></i></div>
+                            <div class="step-text">Analyzing</div>
+                        </div>
+                        <div class="progress-step" id="step-summarizing">
+                            <div class="step-icon"><i class="fas fa-list-alt"></i></div>
+                            <div class="step-text">Summarizing</div>
+                        </div>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="progress-bar"></div>
+                    </div>
+                    <div class="progress-percentage" id="progress-percentage">0%</div>
+                    <div class="progress-message" id="progress-message">Starting upload...</div>
+                `;
+
+                // if it exist Replace welcome container with progress container
+                //else repalce the summary container
+
+                welcomeContainer.parentNode.replaceChild(progressContainer, welcomeContainer);
+
+                // Initialize progress bar
+                const progressBar = document.getElementById('progress-bar');
+                const progressPercentage = document.getElementById('progress-percentage');
+                const progressMessage = document.getElementById('progress-message');
+
+                // Activate first step
+                updateProgressStep('uploading');
+            }
 
             try {
                 const response = await fetch('/upload', {
@@ -43,40 +108,104 @@ function setupFileSubmission() {
                 const uuid = await response.text(); // the UUID returned from server
                 console.log("Upload successful, UUID:", uuid);
 
+                // Update progress UI after successful upload
+                updateProgressStep('transcribing');
+                document.getElementById('progress-message').innerText = "Processing audio from video...";
+                document.getElementById('progress-bar').style.width = "10%";
+                document.getElementById('progress-percentage').innerText = "10%";
+
                 const interval = setInterval(() => {
                     fetch(`/poll-summary?uuid=${uuid}`)
                         .then(res => res.json())
                         .then(data => {
-                            if (data.status === "done") {
-                                clearInterval(interval);
-                                console.log("Summary:", data.summary);
-                                parseMeetingData(data.summary);
-                            } else if (data.status === "processing") {
-                                console.log("Progress:", data.progress + "%");
+                           if (data.status === "done") {
+                                   clearInterval(interval);
+                                   console.log("Summary:", data.summary);
+
+                                   // Show completion animation
+                                   document.getElementById('progress-bar').style.width = "100%";
+                                   document.getElementById('progress-percentage').innerText = "100%";
+                                   document.getElementById('progress-message').innerText = "Processing complete!";
+                                   updateProgressStep('completed');
+
+
+                                   // Hide progress container
+                                   const progressContainer = document.querySelector('.progress-container');
+                                   if (progressContainer) {
+                                       progressContainer.style.display = 'none';
+                                   }
+
+                                   // Show minutes container
+
+                                    const minutesContainer = document.querySelector('.minutes-container');
+                                    const btnContainer = document.querySelector('.button-container');
+                                       if (minutesContainer) {
+                                           minutesContainer.classList.remove('hidden');
+                                           minutesContainer.classList.add('visible');
+                                           btnContainer.classList.remove('hidden');
+                                            btnContainer.classList.add('visible');
+                                       }
+
+                                   // Parse data once
+                                   parseMeetingData(data.summary);
+                                   document.getElementById('originalText').textContent = data.originalText;
+                                }
+                             else if (data.status === "processing") {
+                                // Update progress based on server response
+                                const progress = data.progress || 0;
+                                console.log("Progress:", progress + "%");
+                                console.log("Eta: ", data.eta + " seconds ");
+                                   document.getElementById('progress-bar').style.width = progress + "%";
+                                document.getElementById('progress-percentage').innerText = Math.round(progress) + "%";
+
+                                // Update step based on progress
+                                if (progress < 70) {
+                                    updateProgressStep('transcribing');
+                                    document.getElementById('progress-message').innerText = "Transcribing audio...";
+                                } else if (progress < 80) {
+                                    updateProgressStep('analyzing');
+                                    document.getElementById('progress-message').innerText = "Analyzing meeting content...";
+                                } else {
+                                    updateProgressStep('summarizing');
+                                    document.getElementById('progress-message').innerText = "Creating meeting summary...";
+                                }
                             } else if (data.status === "not_found") {
                                 clearInterval(interval);
                                 console.log("Summary not found or expired.");
+                                document.getElementById('progress-message').innerText = "Error: Processing failed.";
                             }
                         })
                         .catch(err => {
                             clearInterval(interval);
                             console.error("Polling error", err);
+                            document.getElementById('progress-message').innerText = "Error: " + err.message;
                         });
                 }, 500);
 
             } catch (error) {
                 console.error('Error during upload:', error);
+                document.getElementById('progress-message').innerText = "Error: " + error.message;
             }
         });
     }
 }
+function updateProgressStep(step) {
+    // Reset all steps
+    document.querySelectorAll('.progress-step').forEach(el => el.classList.remove('active', 'completed'));
 
+    // Mark steps as completed based on current step
+    const steps = ['uploading', 'transcribing', 'analyzing', 'summarizing'];
+    const currentIndex = steps.indexOf(step);
 
-
-function getProgressBarData() {
-
+    for (let i = 0; i < steps.length; i++) {
+        const stepEl = document.getElementById('step-' + steps[i]);
+        if (i < currentIndex) {
+            stepEl.classList.add('completed');
+        } else if (i === currentIndex) {
+            stepEl.classList.add('active');
+        }
+    }
 }
-
 function setupReadMoreFunctionality() {
     // Get the elements
     const originalText = document.getElementById('originalText');

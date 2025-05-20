@@ -15,6 +15,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" th:href="@{/css/general.css}" />
   <link rel="stylesheet" th:href="@{/css/upload.css}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <meta name="_csrf" th:content="${_csrf.token}"/>
   <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
   <title>V-MoM - Minutes of Meeting</title>
@@ -58,9 +59,9 @@
 </div>
 
 <div class="main-content">
-  <h1 class="main-title center-text">Minutes of Meeting</h1>
+  <h1 th:classappend="hidden">Minutes of Meeting</h1>
 
-  <div class="minutes-container">
+  <div th:classappend="hidden" class="minutes-container" >
     <div class="section meeting-info-section">
       <h2 class="section-title">Meeting Information</h2>
       <div id="meetingInfoContainer" class="meeting-info-content">
@@ -91,20 +92,72 @@
 
     <div class="section">
       <h2 class="section-title">Original Text</h2>
-      <div class="message" th:if="${originalText}">
-        <div class="message-content" id="originalText" th:text="${originalText}"></div>
+      <div class="message">
+        <div class="message-content" id="originalText"></div>
         <div class="message-collapsed" id="collapsedText"></div>
         <button class="read-more-btn" id="readMoreBtn">Show more</button>
       </div>
       <div class="message" th:if="${message}" style="display: none;">
         <div class="message-content" id="summaryText" th:text="${message}"></div>
       </div>
-      <a class="download-link" th:if="${audioFile}" th:href="@{'/voice/' + ${audioFile}}" download>Download Extracted Audio</a>
+    </div>
+
+  </div>
+  <div th:classappend="visible" class="welcome-container">
+    <div class="welcome-header">
+      <h2>Welcome to V-MoM</h2>
+      <p>Your intelligent meeting minutes generator</p>
+    </div>
+
+    <div class="features-container">
+      <div class="feature-box">
+        <div class="feature-icon">
+          <i class="fas fa-magic"></i>
+        </div>
+        <h3>Automatic Transcription</h3>
+        <p>Upload your meeting recordings and V-MoM automatically converts speech to text with advanced AI technology.</p>
+      </div>
+
+      <div class="feature-box">
+        <div class="feature-icon">
+          <i class="fas fa-list-check"></i>
+        </div>
+        <h3>Smart Summarization</h3>
+        <p>Our AI identifies key points, action items, and decisions, organizing them into a well-structured format.</p>
+      </div>
+
+      <div class="feature-box">
+        <div class="feature-icon">
+          <i class="fas fa-file-export"></i>
+        </div>
+        <h3>Easy Sharing</h3>
+        <p>Export and share your meeting minutes in various formats with your team members and stakeholders.</p>
+      </div>
+    </div>
+
+    <div class="get-started-section">
+      <h3>Get Started Now</h3>
+      <p>Upload your first meeting recording using the panel on the left to see V-MoM in action!</p>
+      <div class="steps-container">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-text">Upload video</div>
+        </div>
+        <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-text">AI processes content</div>
+        </div>
+        <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-text">Get structured minutes</div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="button-container">
-    <button class="button">Edit</button>
+  <div class="button-container"  th:classappend="hidden">
     <button class="button">Export</button>
   </div>
 </div>
