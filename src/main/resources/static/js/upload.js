@@ -5,9 +5,6 @@ document.addEventListener('DOMContentLoaded', function() {
     setupFileSubmission();
     // Check for existing meeting
     checkForExistingMeeting();
-
-
-
 });
 
 
@@ -47,7 +44,6 @@ function checkForExistingMeeting() {
                 console.log("Original text found, setting up read more functionality");
                 setupReadMoreFunctionality();
             } else {
-
                 console.warn('Original text is not available yet for existing meeting');
                 loadOriginalText();
             }
@@ -114,9 +110,10 @@ function setupReadMoreFunctionality() {
             collapsedText.style.display = 'block';
             originalText.style.display = 'none';
             readMoreBtn.style.display = 'block';
-
+            readMoreBtn.replaceWith(readMoreBtn.cloneNode(true));
+            const newReadMoreBtn = document.getElementById('readMoreBtn');
             // Add click event for "Read More" button
-            readMoreBtn.addEventListener('click', function() {
+            newReadMoreBtn.addEventListener('click', function() {
                 if (collapsedText.classList.contains('expanded')) {
                     // Collapse
                     collapsedText.classList.remove('expanded');
@@ -147,9 +144,19 @@ function setupReadMoreFunctionality() {
     }
 }
 
+// Helper function to format time remaining
+function formatTimeRemaining(seconds) {
+    if (seconds <= 0) return "Processing...";
 
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
 
-
+    if (minutes > 0) {
+        return `${minutes} minute${minutes > 1 ? 's' : ''}, ${remainingSeconds} second${remainingSeconds !== 1 ? 's' : ''} remaining`;
+    } else {
+        return `${remainingSeconds} second${remainingSeconds !== 1 ? 's' : ''} remaining`;
+    }
+}
 
 function setupFileSubmission() {
     const fileInput = document.getElementById('fileInput');
@@ -229,6 +236,7 @@ function setupFileSubmission() {
                     </div>
                     <div class="progress-percentage" id="progress-percentage">0%</div>
                     <div class="progress-message" id="progress-message">Starting upload...</div>
+                    <div class="time-remaining" id="time-remaining"></div>
                 `;
 
                 // Append progress container to main content
@@ -242,6 +250,7 @@ function setupFileSubmission() {
             const progressBar = document.getElementById('progress-bar');
             const progressPercentage = document.getElementById('progress-percentage');
             const progressMessage = document.getElementById('progress-message');
+            const timeRemaining = document.getElementById('time-remaining');
 
             // Activate first step
             updateProgressStep('uploading');
@@ -281,6 +290,9 @@ function setupFileSubmission() {
                                    document.getElementById('progress-bar').style.width = "100%";
                                    document.getElementById('progress-percentage').innerText = "100%";
                                    document.getElementById('progress-message').innerText = "Processing complete!";
+                                   if (timeRemaining) {
+                                       timeRemaining.innerText = "";
+                                   }
                                    updateProgressStep('completed');
 
                                    // Hide progress container
@@ -328,8 +340,15 @@ function setupFileSubmission() {
                                 const progress = data.progress || 0;
                                 console.log("Progress:", progress + "%");
                                 console.log("Eta: ", data.eta + " seconds ");
-                                   document.getElementById('progress-bar').style.width = progress + "%";
+
+                                // Update progress bar and percentage
+                                document.getElementById('progress-bar').style.width = progress + "%";
                                 document.getElementById('progress-percentage').innerText = Math.round(progress) + "%";
+
+                                // Update time remaining display
+                                if (timeRemaining && data.eta !== undefined) {
+                                    timeRemaining.innerText = formatTimeRemaining(data.eta);
+                                }
 
                                 // Update step based on progress
                                 if (progress < 70) {
@@ -346,36 +365,66 @@ function setupFileSubmission() {
                                 clearInterval(interval);
                                 console.log("Summary not found or expired.");
                                 document.getElementById('progress-message').innerText = "Error: Processing failed.";
+                                if (timeRemaining) {
+                                    timeRemaining.innerText = "";
+                                }
                             }
                         })
                         .catch(err => {
                             clearInterval(interval);
                             console.error("Polling error", err);
                             document.getElementById('progress-message').innerText = "Error: " + err.message;
+                            if (timeRemaining) {
+                                timeRemaining.innerText = "";
+                            }
                         });
                 }, 500);
 
             } catch (error) {
                 console.error('Error during upload:', error);
                 document.getElementById('progress-message').innerText = "Error: " + error.message;
+                if (timeRemaining) {
+                    timeRemaining.innerText = "";
+                }
             }
         });
     }
 }
-function updateProgressStep(step) {
-    // Reset all steps
-    document.querySelectorAll('.progress-step').forEach(el => el.classList.remove('active', 'completed'));
 
-    // Mark steps as completed based on current step
+function updateProgressStep(step) {
     const steps = ['uploading', 'transcribing', 'analyzing', 'summarizing'];
+    const stepTexts = {
+        'uploading': { active: 'Uploading', completed: 'Uploaded' },
+        'transcribing': { active: 'Transcribing', completed: 'Transcribed' },
+        'analyzing': { active: 'Analyzing', completed: 'Analyzed' },
+        'summarizing': { active: 'Summarizing', completed: 'Summarized' }
+    };
+
     const currentIndex = steps.indexOf(step);
+
+    document.querySelectorAll('.progress-step').forEach(el => el.classList.remove('active', 'completed'));
 
     for (let i = 0; i < steps.length; i++) {
         const stepEl = document.getElementById('step-' + steps[i]);
+        const stepTextEl = stepEl.querySelector('.step-text');
+
         if (i < currentIndex) {
             stepEl.classList.add('completed');
+            stepTextEl.textContent = stepTexts[steps[i]].completed;
         } else if (i === currentIndex) {
             stepEl.classList.add('active');
+            stepTextEl.textContent = stepTexts[steps[i]].active;
+        } else {
+            stepTextEl.textContent = stepTexts[steps[i]].active;
+        }
+    }
+
+    if (step === 'completed') {
+        for (let i = 0; i < steps.length; i++) {
+            const stepEl = document.getElementById('step-' + steps[i]);
+            const stepTextEl = stepEl.querySelector('.step-text');
+            stepEl.classList.add('completed');
+            stepTextEl.textContent = stepTexts[steps[i]].completed;
         }
     }
 }
