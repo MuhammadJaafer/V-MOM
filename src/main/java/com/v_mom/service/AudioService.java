@@ -37,33 +37,33 @@ import ws.schild.jave.encode.EncodingAttributes;
 @Service
 public class AudioService {
 
-  private static final String VOICE_DIR      = "voice";
-  private static final String CHUNKS_DIR     = "voice/chunks";
-  private static final String WAV_EXTENSION  = ".wav";
-  private static final String WAV_FORMAT     = "wav";
-  private static final String WAV_CODEC      = "pcm_s16le";
-  private static final int    BITRATE        = 64_000;
-  private static final int    CHANNELS       = 1;       // mono
-  private static final int    SAMPLING_RATE  = 16_000;  // recommended
-  private static final int    CHUNK_DURATION = 30;      // seconds
+  private static final String VOICE_DIR = "voice";
+  private static final String CHUNKS_DIR = "voice/chunks";
+  private static final String WAV_EXTENSION = ".wav";
+  private static final String WAV_FORMAT = "wav";
+  private static final String WAV_CODEC = "pcm_s16le";
+  private static final int BITRATE = 64_000;
+  private static final int CHANNELS = 1; // mono
+  private static final int SAMPLING_RATE = 16_000; // recommended
+  private static final int CHUNK_DURATION = 30; // seconds
+  private static int EtaMultiplier = 25;
 
   // Concurrency settings based on Google Speech-to-Text quotas
   private static final double REQUESTS_PER_SECOND = 15.0;
-  private static final int    MAX_CONCURRENT_THREADS = 16;
-  private static final long   AWAIT_TERMINATION_MINUTES = 10;
+  private static final int MAX_CONCURRENT_THREADS = 16;
+  private static final long AWAIT_TERMINATION_MINUTES = 10;
 
-  @Autowired
-  TranscriptRepository transcriptRepository;
-  @Autowired
-  private SummaryCacheService summaryCacheService;
+  @Autowired TranscriptRepository transcriptRepository;
+  @Autowired private SummaryCacheService summaryCacheService;
+
   /**
-   * Extracts audio from a video, splits into uniquely named chunks,
-   * transcribes them in parallel (throttled), and returns the full transcript.
+   * Extracts audio from a video, splits into uniquely named chunks, transcribes them in parallel
+   * (throttled), and returns the full transcript.
    *
    * @param videoFile video file to process
    * @return combined transcription text, or null on failure
    */
-  public String extractAndTranscribe(File videoFile,Meeting meeting, String uuid) {
+  public String extractAndTranscribe(File videoFile, Meeting meeting, String uuid) {
     if (videoFile == null || !videoFile.exists()) {
       return null;
     }
@@ -81,25 +81,26 @@ public class AudioService {
 
       // 2) Split WAV into uniquely named chunks
       List<File> chunkFiles = splitWavFile(wavFile, baseName, CHUNK_DURATION, chunksDir);
-      summaryCacheService.incrementProgress(uuid,5);
+      summaryCacheService.incrementProgress(uuid, 5);
       Double numberOfChunks = (double) chunkFiles.size();
+      summaryCacheService.setInitialChunks(uuid, numberOfChunks.intValue());
 
       // 3) Transcribe chunks in parallel with rate limiting
-      List<String> transcripts = transcribeChunksConcurrently(chunkFiles,uuid,numberOfChunks);
+      List<String> transcripts = transcribeChunksConcurrently(chunkFiles, uuid, numberOfChunks);
 
       // 4) Stitch together
       StringBuilder fullTranscript = new StringBuilder();
       for (String part : transcripts) {
         fullTranscript.append(part).append("\n");
       }
-      summaryCacheService.incrementProgress(uuid,5);
+      summaryCacheService.incrementProgress(uuid, 5);
 
       // Save the transcript to the database
       String fullTranscriptText = fullTranscript.toString().trim();
       Transcript transcriptEntity = new Transcript();
       transcriptEntity.setTranscriptId(uuid);
       transcriptEntity.setMeeting(meeting);
-      transcriptEntity.setContent(fullTranscriptText );
+      transcriptEntity.setContent(fullTranscriptText);
       transcriptRepository.save(transcriptEntity);
 
       return fullTranscriptText;
@@ -129,7 +130,8 @@ public class AudioService {
     new Encoder().encode(new MultimediaObject(videoFile), outputAudioFile, attrs);
   }
 
-  private List<File> splitWavFile(File inputWav, String baseName, int seconds, File outputDir) throws Exception {
+  private List<File> splitWavFile(File inputWav, String baseName, int seconds, File outputDir)
+      throws Exception {
     List<File> chunks = new ArrayList<>();
     try (AudioInputStream inputStream = AudioSystem.getAudioInputStream(inputWav)) {
       AudioFormat format = inputStream.getFormat();
@@ -140,7 +142,8 @@ public class AudioService {
       int bytesRead, idx = 0;
       while ((bytesRead = inputStream.read(buffer)) > 0) {
         try (ByteArrayInputStream bais = new ByteArrayInputStream(buffer, 0, bytesRead);
-            AudioInputStream chunkStream = new AudioInputStream(bais, format, bytesRead / format.getFrameSize())) {
+            AudioInputStream chunkStream =
+                new AudioInputStream(bais, format, bytesRead / format.getFrameSize())) {
 
           File chunkFile = new File(outputDir, String.format("%s_chunk_%03d.wav", baseName, idx++));
           AudioSystem.write(chunkStream, AudioFileFormat.Type.WAVE, chunkFile);
@@ -151,7 +154,8 @@ public class AudioService {
     return chunks;
   }
 
-  private List<String> transcribeChunksConcurrently(List<File> chunkFiles,String uuid , Double numberOfChunks) throws InterruptedException {
+  private List<String> transcribeChunksConcurrently(
+      List<File> chunkFiles, String uuid, Double numberOfChunks) throws InterruptedException {
     long globalStart = System.currentTimeMillis();
 
     RateLimiter limiter = RateLimiter.create(REQUESTS_PER_SECOND);
@@ -160,13 +164,16 @@ public class AudioService {
 
     for (File chunk : chunkFiles) {
       limiter.acquire();
-      futures.add(exec.submit((Callable<String>) () -> {
-        try {
-          return transcribeAudio(chunk,uuid,numberOfChunks);
-        } catch (Exception e) {
-          throw new RuntimeException("Transcription failed for " + chunk.getName(), e);
-        }
-      }));
+      futures.add(
+          exec.submit(
+              (Callable<String>)
+                  () -> {
+                    try {
+                      return transcribeAudio(chunk, uuid, numberOfChunks);
+                    } catch (Exception e) {
+                      throw new RuntimeException("Transcription failed for " + chunk.getName(), e);
+                    }
+                  }));
     }
 
     exec.shutdown();
@@ -183,11 +190,17 @@ public class AudioService {
 
     long globalEnd = System.currentTimeMillis();
     double totalSeconds = (globalEnd - globalStart) / 1000.0;
-    System.out.println("✅ "+MAX_CONCURRENT_THREADS+": Total transcription time for all chunks: " + totalSeconds + " seconds");
+    System.out.println(
+        "✅ "
+            + MAX_CONCURRENT_THREADS
+            + ": Total transcription time for all chunks: "
+            + totalSeconds
+            + " seconds");
     return results;
   }
 
-  private String transcribeAudio(File audioFile,String uuid, Double numberOfChunks) throws Exception {
+  private String transcribeAudio(File audioFile, String uuid, Double numberOfChunks)
+      throws Exception {
     long start = System.currentTimeMillis(); // LOG EARLY
 
     System.out.println("[" + audioFile.getName() + "] Start time: " + start);
@@ -196,18 +209,16 @@ public class AudioService {
       byte[] data = Files.readAllBytes(audioFile.toPath());
       ByteString audioBytes = ByteString.copyFrom(data);
 
-      RecognitionConfig config = RecognitionConfig.newBuilder()
-          .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)
-          .setLanguageCode("en-US")
-          .setSampleRateHertz(SAMPLING_RATE)
-          .build();
+      RecognitionConfig config =
+          RecognitionConfig.newBuilder()
+              .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)
+              .setLanguageCode("en-US")
+              .setSampleRateHertz(SAMPLING_RATE)
+              .build();
 
-      RecognitionAudio audio = RecognitionAudio.newBuilder()
-          .setContent(audioBytes)
-          .build();
+      RecognitionAudio audio = RecognitionAudio.newBuilder().setContent(audioBytes).build();
 
       RecognizeResponse response = speechClient.recognize(config, audio);
-
 
       StringBuilder transcript = new StringBuilder();
       for (SpeechRecognitionResult result : response.getResultsList()) {
@@ -220,8 +231,10 @@ public class AudioService {
 
       System.out.println("[" + audioFile.getName() + "] Done in: " + seconds + " seconds");
 
-      summaryCacheService.incrementProgress(uuid,60/numberOfChunks);
-      System.out.println("Current Progress: " + summaryCacheService.getProgress(uuid) + "%");
+      summaryCacheService.incrementProgress(uuid, 60 / numberOfChunks);
+      summaryCacheService.chunkProcessed(uuid,seconds
+      );
+      System.out.println("Current Progress: " + summaryCacheService.getProgress(uuid) + "%"+" Eta: " + summaryCacheService.getEta(uuid) + " seconds");
       return transcript.toString().trim();
     }
   }
