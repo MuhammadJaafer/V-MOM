@@ -168,6 +168,8 @@ function setupFileSubmission() {
 
     if (fileInput && submitButton) {
         submitButton.addEventListener('click', async function () {
+        let lastEta = null;
+        let lastEtaTime = null;
             if (fileInput.files.length === 0) {
                 console.error('No file selected for submission.');
                 return;
@@ -344,10 +346,24 @@ function setupFileSubmission() {
                                 // Update progress bar and percentage
                                 document.getElementById('progress-bar').style.width = progress + "%";
                                 document.getElementById('progress-percentage').innerText = Math.round(progress) + "%";
+  const currentTime = Date.now();
+                let displayEta = data.eta;
 
+                if (data.eta !== undefined) {
+                    if (lastEta === null || data.eta !== lastEta) {
+                        // Reset our tracking when we get a new ETA value
+                        lastEta = data.eta;
+                        lastEtaTime = currentTime;
+                        displayEta = data.eta;
+                    } else {
+                        // Calculate time elapsed since last ETA update
+                        const elapsedSeconds = Math.floor((currentTime - lastEtaTime) / 1000);
+                        displayEta = Math.max(lastEta - elapsedSeconds, 0);
+                    }
+                }
                                 // Update time remaining display
                                 if (timeRemaining && data.eta !== undefined) {
-                                    timeRemaining.innerText = formatTimeRemaining(data.eta);
+                                    timeRemaining.innerText = formatTimeRemaining(displayEta);
                                 }
 
                                 // Update step based on progress
