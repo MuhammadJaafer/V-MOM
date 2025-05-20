@@ -327,15 +327,15 @@ function setupFileSubmission() {
                                 // Update progress based on server response
                                 const progress = data.progress || 0;
                                 console.log("Progress:", progress + "%");
-
-                                document.getElementById('progress-bar').style.width = progress + "%";
+                                console.log("Eta: ", data.eta + " seconds ");
+                                   document.getElementById('progress-bar').style.width = progress + "%";
                                 document.getElementById('progress-percentage').innerText = Math.round(progress) + "%";
 
                                 // Update step based on progress
-                                if (progress < 25) {
+                                if (progress < 70) {
                                     updateProgressStep('transcribing');
                                     document.getElementById('progress-message').innerText = "Transcribing audio...";
-                                } else if (progress < 75) {
+                                } else if (progress < 80) {
                                     updateProgressStep('analyzing');
                                     document.getElementById('progress-message').innerText = "Analyzing meeting content...";
                                 } else {

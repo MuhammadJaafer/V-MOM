@@ -1,9 +1,9 @@
 package com.v_mom.controller;
 
 import com.v_mom.entity.Meeting;
-import com.v_mom.entity.User;
 import com.v_mom.entity.Summary;
 import com.v_mom.entity.Transcript;
+import com.v_mom.entity.User;
 import com.v_mom.repository.MeetingRepository;
 import com.v_mom.repository.SummaryRepository;
 import com.v_mom.repository.TranscriptRepository;
@@ -48,15 +48,18 @@ public class VideoUploadController {
   private final AudioService audioService;
   private final SummaryService summaryService;
   private final SummaryCacheService summaryCacheService;
+
   @Value("${upload.dir}")
   private String uploadDir;
 
   @Autowired
-  public VideoUploadController(AudioService audioService, SummaryService summaryService,
-      SummaryCacheService summaryCacheService)  {
+  public VideoUploadController(
+      AudioService audioService,
+      SummaryService summaryService,
+      SummaryCacheService summaryCacheService) {
     this.audioService = audioService;
     this.summaryService = summaryService;
-  this.summaryCacheService = summaryCacheService;
+    this.summaryCacheService = summaryCacheService;
   }
 
   @GetMapping("/upload")
@@ -108,7 +111,8 @@ public class VideoUploadController {
       String summary = summaryCacheService.retrieveAndRemoveSummary(uuid);
       Transcript transcript = transcriptRepository.findByTranscriptId(uuid);
       System.out.println(transcript.getContent());
-      return ResponseEntity.ok(Map.of("status", "done", "summary", summary,"originalText", transcript.getContent()));
+      return ResponseEntity.ok(
+          Map.of("status", "done", "summary", summary, "originalText", transcript.getContent()));
     }
 
     Double percent = summaryCacheService.getProgress(uuid);
@@ -117,7 +121,9 @@ public class VideoUploadController {
           .body(Map.of("status", "not_found", "message", "Invalid or expired UUID"));
     }
 
-    return ResponseEntity.ok(Map.of("status", "processing", "progress", percent));
+    return ResponseEntity.ok(
+        Map.of(
+            "status", "processing", "progress", percent, "eta", summaryCacheService.getEta(uuid)));
   }
 
   @PostMapping("/upload")
@@ -133,7 +139,8 @@ public class VideoUploadController {
 
     try {
       // Save the uploaded file
-      summaryCacheService.incrementProgress(uuid,5);
+      summaryCacheService.setEta(uuid, 60);
+      summaryCacheService.incrementProgress(uuid, 5);
       File savedFile = saveUploadedFile(file, uniqueFileName);
       summaryCacheService.incrementProgress(uuid, 10);
 
@@ -141,24 +148,25 @@ public class VideoUploadController {
       Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
       // Run processing in background (async) and pass auth object
-      CompletableFuture.runAsync(() -> {
-        try {
-          SecurityContextHolder.setContext(SecurityContextHolder.createEmptyContext());
-          SecurityContextHolder.getContext().setAuthentication(authentication);
+      CompletableFuture.runAsync(
+          () -> {
+            try {
+              SecurityContextHolder.setContext(SecurityContextHolder.createEmptyContext());
+              SecurityContextHolder.getContext().setAuthentication(authentication);
 
-          processVideoFile(savedFile, file.getOriginalFilename(), uuid);
-        } catch (Exception e) {
-          e.printStackTrace(); // or use a logger
-        }
-      });
+              processVideoFile(savedFile, file.getOriginalFilename(), uuid);
+            } catch (Exception e) {
+              e.printStackTrace(); // or use a logger
+            }
+          });
       // Return just the UUID part
       return ResponseEntity.ok(uuid);
 
     } catch (IOException e) {
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Upload failed: " + e.getMessage());
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body("Upload failed: " + e.getMessage());
     }
   }
-
 
   /**
    * Saves the uploaded file to the file system
@@ -167,7 +175,7 @@ public class VideoUploadController {
    * @return The saved file
    * @throws IOException If file saving fails
    */
-  private File saveUploadedFile(MultipartFile file, String uniqueFileName ) throws IOException {
+  private File saveUploadedFile(MultipartFile file, String uniqueFileName) throws IOException {
     Path uploadPath = Paths.get(uploadDir, uniqueFileName);
 
     // Create directory if it doesn't exist
@@ -193,10 +201,12 @@ public class VideoUploadController {
     meetingRepository.save(meeting);
 
     summaryCacheService.incrementProgress(uuid, 5);
-    String text = audioService.extractAndTranscribe(videoFile, meeting,uuid);
+    String text = audioService.extractAndTranscribe(videoFile, meeting, uuid);
 
+
+    summaryCacheService.setEta(uuid, 10);
     String summary = LLMService.summarizeTranscript(text);
-    summaryCacheService.incrementProgress(uuid,15);
+    summaryCacheService.incrementProgress(uuid, 15);
 
     summaryService.saveSummary(meeting, summary);
     summaryCacheService.storeSummary(uuid, summary);
@@ -211,6 +221,6 @@ public class VideoUploadController {
    * @param message The message to add
    */
   private void addMessage(RedirectAttributes redirectAttributes, String message) {
-//    redirectAttributes.addFlashAttribute(MESSAGE_ATTR, message);
+    //    redirectAttributes.addFlashAttribute(MESSAGE_ATTR, message);
   }
 }
