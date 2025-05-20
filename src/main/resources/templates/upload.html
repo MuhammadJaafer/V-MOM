@@ -56,11 +56,16 @@
       <button id="submit-button" type="submit">Upload</button>
     </div>
   </div>
+    <form th:action="@{/logout}" class="sidebar-footer" method="post">
+    <button id="logout-btn" class="logout-button" title="Logout">
+      <i class="fas fa-sign-out-alt"></i>
+      <span>Logout</span>
+    </button>
+  </form>
 </div>
 
 <div class="main-content">
-  <h1 th:classappend="hidden">Minutes of Meeting</h1>
-
+<!--  <h1 th:classappend="hidden">Minutes of Meeting</h1>-->
   <div th:classappend="hidden" class="minutes-container" >
     <div class="section meeting-info-section">
       <h2 class="section-title">Meeting Information</h2>

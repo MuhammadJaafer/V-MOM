@@ -7,6 +7,6 @@ import java.util.Optional;
 
 public interface TranscriptRepository extends JpaRepository<Transcript, Long> {
     Optional<Transcript> findByMeeting(Meeting meeting);
-
+    Transcript findFirstByMeeting(Meeting meeting);
   Transcript findByTranscriptId(String uuid);
 }

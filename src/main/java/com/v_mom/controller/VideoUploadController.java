@@ -90,9 +90,10 @@ public class VideoUploadController {
     // Verify the meeting exists and belongs to the current user
     if (meeting != null && meeting.getUser().getUserId().equals(currentUser.getUserId())) {
       // Find the transcript for this meeting
-      Optional<Transcript> transcript = transcriptRepository.findByMeeting(meeting);
-      if (transcript.isPresent()) {
-        model.addAttribute(ORIGINAL_TEXT_ATTR, transcript.get().getContent());
+      Transcript transcript = transcriptRepository.findFirstByMeeting(meeting);
+
+      if (transcript != null) {
+        model.addAttribute(ORIGINAL_TEXT_ATTR, transcript.getContent());
       }
 
       // Find the summary for this meeting

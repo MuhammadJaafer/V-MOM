@@ -1,13 +1,10 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Handle the original text collapse/expand functionality
-    setupReadMoreFunctionality();
-
     // Handle file upload functionality
     setupFileUploadFunctionality();
-    //set up File submission
+    // Set up File submission
     setupFileSubmission();
+    // Check for existing meeting
     checkForExistingMeeting();
-
 });
 
 
@@ -16,15 +13,155 @@ function checkForExistingMeeting() {
     if (summaryTextElement && summaryTextElement.textContent.trim()) {
         console.log("Found existing meeting summary, parsing...");
         parseMeetingData(summaryTextElement.textContent);
+
+        const welcome = document.querySelector('.welcome-container');
+        if (welcome) {
+            welcome.classList.add('hidden');
+            welcome.classList.remove('visible');
+        }
+
+        const minutes = document.querySelector('.minutes-container');
+        if (minutes) {
+            minutes.classList.remove('hidden');
+            minutes.classList.add('visible');
+        }
+
+        const btnContainer = document.querySelector('.button-container');
+        if (btnContainer) {
+            btnContainer.classList.remove('hidden');
+            btnContainer.classList.add('visible');
+        }
+
+        const mainTitle = document.querySelector('h1');
+        if (mainTitle) {
+            mainTitle.classList.remove('hidden');
+            mainTitle.classList.add('visible');
+        }
+
+        setTimeout(() => {
+            const originalTextElement = document.getElementById('originalText');
+            if (originalTextElement && originalTextElement.textContent.trim()) {
+                console.log("Original text found, setting up read more functionality");
+                setupReadMoreFunctionality();
+            } else {
+                console.warn('Original text is not available yet for existing meeting');
+                loadOriginalText();
+            }
+        }, 100);
+    }
+}
+function loadOriginalText() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const meetingId = urlParams.get('meetingId');
+
+    if (meetingId) {
+        console.log("Fetching original text for meeting ID:", meetingId);
+
+        fetch(`/api/meetings/${meetingId}/transcript`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch transcript');
+                }
+                return response.text();
+            })
+            .then(text => {
+                console.log("Received transcript text");
+                const originalTextElement = document.getElementById('originalText');
+                if (originalTextElement) {
+                    originalTextElement.textContent = text;
+                    setupReadMoreFunctionality();
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching transcript:', error);
+            });
     }
 }
 
+function setupReadMoreFunctionality() {
+    // Get the elements
+    const originalText = document.getElementById('originalText');
+    const collapsedText = document.getElementById('collapsedText');
+    const readMoreBtn = document.getElementById('readMoreBtn');
+
+    // Check if elements exist (they will only exist when there's a message)
+    if (originalText && collapsedText && readMoreBtn) {
+        // Get the original text content
+        const fullText = originalText.textContent || originalText.innerText;
+
+        if (!fullText || fullText.trim() === '') {
+            console.warn('Original text is empty, cannot setup read more functionality');
+            return;
+        }
+
+        // Only apply "Read More" if text is longer than a certain length
+        const charLimit = 700; // Adjust this value as needed
+
+        if (fullText.length > charLimit) {
+            // Create the collapsed version
+            collapsedText.innerHTML = fullText.substring(0, charLimit) + '...';
+
+            // Add fade effect element
+            const fadeElement = document.createElement('div');
+            fadeElement.className = 'fade-out';
+            collapsedText.appendChild(fadeElement);
+
+            // Show collapsed text and hide original
+            collapsedText.style.display = 'block';
+            originalText.style.display = 'none';
+            readMoreBtn.style.display = 'block';
+            readMoreBtn.replaceWith(readMoreBtn.cloneNode(true));
+            const newReadMoreBtn = document.getElementById('readMoreBtn');
+            // Add click event for "Read More" button
+            newReadMoreBtn.addEventListener('click', function() {
+                if (collapsedText.classList.contains('expanded')) {
+                    // Collapse
+                    collapsedText.classList.remove('expanded');
+                    collapsedText.innerHTML = fullText.substring(0, charLimit) + '...';
+
+                    // Add fade effect again
+                    const fadeElement = document.createElement('div');
+                    fadeElement.className = 'fade-out';
+                    collapsedText.appendChild(fadeElement);
+
+                    readMoreBtn.textContent = 'Show more';
+                } else {
+                    // Expand
+                    collapsedText.classList.add('expanded');
+                    collapsedText.textContent = fullText;
+                    readMoreBtn.textContent = 'Show less';
+                }
+            });
+        } else {
+            // If text is short, just show the original content
+            collapsedText.innerHTML = fullText;
+            collapsedText.style.display = 'block';
+            originalText.style.display = 'none';
+            readMoreBtn.style.display = 'none';
+        }
+    } else {
+        console.warn('One or more elements required for read more functionality not found');
+    }
+}
+
+// Helper function to format time remaining
+function formatTimeRemaining(seconds) {
+    if (seconds <= 0) return "Processing...";
+
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+
+    if (minutes > 0) {
+        return `${minutes} minute${minutes > 1 ? 's' : ''}, ${remainingSeconds} second${remainingSeconds !== 1 ? 's' : ''} remaining`;
+    } else {
+        return `${remainingSeconds} second${remainingSeconds !== 1 ? 's' : ''} remaining`;
+    }
+}
 
 function setupFileSubmission() {
     const fileInput = document.getElementById('fileInput');
     const submitButton = document.getElementById('submit-button');
     const mainContent = document.querySelector('.main-content');
-    const welcomeContainer = document.querySelector('.welcome-container');
 
     const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
@@ -41,9 +178,32 @@ function setupFileSubmission() {
             formData.append("file", file);
 
             // Show loading UI
+            // First hide any existing content containers
+            const welcomeContainer = document.querySelector('.welcome-container');
+            const minutesContainer = document.querySelector('.minutes-container');
+            const buttonContainer = document.querySelector('.button-container');
+
             if (welcomeContainer) {
-                // Create progress container
-                const progressContainer = document.createElement('div');
+                welcomeContainer.classList.add('hidden');
+                welcomeContainer.classList.remove('visible');
+            }
+
+            if (minutesContainer) {
+                minutesContainer.classList.add('hidden');
+                minutesContainer.classList.remove('visible');
+            }
+
+            if (buttonContainer) {
+                buttonContainer.classList.add('hidden');
+                buttonContainer.classList.remove('visible');
+            }
+
+            // Create progress container
+            let progressContainer = document.querySelector('.progress-container');
+
+            // If progress container doesn't exist, create it
+            if (!progressContainer) {
+                progressContainer = document.createElement('div');
                 progressContainer.className = 'progress-container';
                 progressContainer.innerHTML = `
                     <div class="progress-header">
@@ -76,21 +236,24 @@ function setupFileSubmission() {
                     </div>
                     <div class="progress-percentage" id="progress-percentage">0%</div>
                     <div class="progress-message" id="progress-message">Starting upload...</div>
+                    <div class="time-remaining" id="time-remaining"></div>
                 `;
 
-                // if it exist Replace welcome container with progress container
-                //else repalce the summary container
-
-                welcomeContainer.parentNode.replaceChild(progressContainer, welcomeContainer);
-
-                // Initialize progress bar
-                const progressBar = document.getElementById('progress-bar');
-                const progressPercentage = document.getElementById('progress-percentage');
-                const progressMessage = document.getElementById('progress-message');
-
-                // Activate first step
-                updateProgressStep('uploading');
+                // Append progress container to main content
+                mainContent.appendChild(progressContainer);
+            } else {
+                // If progress container exists, make it visible
+                progressContainer.style.display = 'block';
             }
+
+            // Initialize progress bar
+            const progressBar = document.getElementById('progress-bar');
+            const progressPercentage = document.getElementById('progress-percentage');
+            const progressMessage = document.getElementById('progress-message');
+            const timeRemaining = document.getElementById('time-remaining');
+
+            // Activate first step
+            updateProgressStep('uploading');
 
             try {
                 const response = await fetch('/upload', {
@@ -121,13 +284,16 @@ function setupFileSubmission() {
                            if (data.status === "done") {
                                    clearInterval(interval);
                                    console.log("Summary:", data.summary);
+                                   console.log("Original Text:", data.originalText);
 
                                    // Show completion animation
                                    document.getElementById('progress-bar').style.width = "100%";
                                    document.getElementById('progress-percentage').innerText = "100%";
                                    document.getElementById('progress-message').innerText = "Processing complete!";
+                                   if (timeRemaining) {
+                                       timeRemaining.innerText = "";
+                                   }
                                    updateProgressStep('completed');
-
 
                                    // Hide progress container
                                    const progressContainer = document.querySelector('.progress-container');
@@ -136,27 +302,53 @@ function setupFileSubmission() {
                                    }
 
                                    // Show minutes container
+                                   const minutesContainer = document.querySelector('.minutes-container');
+                                   const btnContainer = document.querySelector('.button-container');
+                                   const mainTitle = document.querySelector('h1');
 
-                                    const minutesContainer = document.querySelector('.minutes-container');
-                                    const btnContainer = document.querySelector('.button-container');
-                                       if (minutesContainer) {
-                                           minutesContainer.classList.remove('hidden');
-                                           minutesContainer.classList.add('visible');
-                                           btnContainer.classList.remove('hidden');
-                                            btnContainer.classList.add('visible');
-                                       }
+                                   if (minutesContainer) {
+                                       minutesContainer.classList.remove('hidden');
+                                       minutesContainer.classList.add('visible');
+                                   }
+
+                                   if (btnContainer) {
+                                       btnContainer.classList.remove('hidden');
+                                       btnContainer.classList.add('visible');
+                                   }
+
+                                   if (mainTitle) {
+                                       mainTitle.classList.remove('hidden');
+                                       mainTitle.classList.add('visible');
+                                   }
 
                                    // Parse data once
                                    parseMeetingData(data.summary);
-                                   document.getElementById('originalText').textContent = data.originalText;
+
+                                   // Set the original text
+                                   const originalTextElement = document.getElementById('originalText');
+                                   if (originalTextElement) {
+                                       originalTextElement.textContent = data.originalText;
+                                       // Make sure it's not hidden
+                                       originalTextElement.style.display = 'block';
+                                   }
+
+                                   // Re-initialize the read more functionality
+                                   setupReadMoreFunctionality();
                                 }
                              else if (data.status === "processing") {
                                 // Update progress based on server response
                                 const progress = data.progress || 0;
                                 console.log("Progress:", progress + "%");
                                 console.log("Eta: ", data.eta + " seconds ");
-                                   document.getElementById('progress-bar').style.width = progress + "%";
+
+                                // Update progress bar and percentage
+                                document.getElementById('progress-bar').style.width = progress + "%";
                                 document.getElementById('progress-percentage').innerText = Math.round(progress) + "%";
+
+                                // Update time remaining display
+                                if (timeRemaining && data.eta !== undefined) {
+                                    timeRemaining.innerText = formatTimeRemaining(data.eta);
+                                }
 
                                 // Update step based on progress
                                 if (progress < 70) {
@@ -173,93 +365,66 @@ function setupFileSubmission() {
                                 clearInterval(interval);
                                 console.log("Summary not found or expired.");
                                 document.getElementById('progress-message').innerText = "Error: Processing failed.";
+                                if (timeRemaining) {
+                                    timeRemaining.innerText = "";
+                                }
                             }
                         })
                         .catch(err => {
                             clearInterval(interval);
                             console.error("Polling error", err);
                             document.getElementById('progress-message').innerText = "Error: " + err.message;
+                            if (timeRemaining) {
+                                timeRemaining.innerText = "";
+                            }
                         });
                 }, 500);
 
             } catch (error) {
                 console.error('Error during upload:', error);
                 document.getElementById('progress-message').innerText = "Error: " + error.message;
+                if (timeRemaining) {
+                    timeRemaining.innerText = "";
+                }
             }
         });
     }
 }
-function updateProgressStep(step) {
-    // Reset all steps
-    document.querySelectorAll('.progress-step').forEach(el => el.classList.remove('active', 'completed'));
 
-    // Mark steps as completed based on current step
+function updateProgressStep(step) {
     const steps = ['uploading', 'transcribing', 'analyzing', 'summarizing'];
+    const stepTexts = {
+        'uploading': { active: 'Uploading', completed: 'Uploaded' },
+        'transcribing': { active: 'Transcribing', completed: 'Transcribed' },
+        'analyzing': { active: 'Analyzing', completed: 'Analyzed' },
+        'summarizing': { active: 'Summarizing', completed: 'Summarized' }
+    };
+
     const currentIndex = steps.indexOf(step);
+
+    document.querySelectorAll('.progress-step').forEach(el => el.classList.remove('active', 'completed'));
 
     for (let i = 0; i < steps.length; i++) {
         const stepEl = document.getElementById('step-' + steps[i]);
+        const stepTextEl = stepEl.querySelector('.step-text');
+
         if (i < currentIndex) {
             stepEl.classList.add('completed');
+            stepTextEl.textContent = stepTexts[steps[i]].completed;
         } else if (i === currentIndex) {
             stepEl.classList.add('active');
+            stepTextEl.textContent = stepTexts[steps[i]].active;
+        } else {
+            stepTextEl.textContent = stepTexts[steps[i]].active;
         }
     }
-}
-function setupReadMoreFunctionality() {
-    // Get the elements
-    const originalText = document.getElementById('originalText');
-    const collapsedText = document.getElementById('collapsedText');
-    const readMoreBtn = document.getElementById('readMoreBtn');
 
-    // Check if elements exist (they will only exist when there's a message)
-    if (originalText && collapsedText && readMoreBtn) {
-        // Get the original text content
-        const fullText = originalText.textContent;
-
-        // Only apply "Read More" if text is longer than a certain length
-        const charLimit = 700; // Adjust this value as needed
-
-        if (fullText.length > charLimit) {
-            // Create the collapsed version
-            collapsedText.innerHTML = fullText.substring(0, charLimit) + '...';
-
-            // Add fade effect element
-            const fadeElement = document.createElement('div');
-            fadeElement.className = 'fade-out';
-            collapsedText.appendChild(fadeElement);
-
-            // Show collapsed text and hide original
-            collapsedText.style.display = 'block';
-            originalText.style.display = 'none';
-            readMoreBtn.style.display = 'block';
-
-            // Add click event for "Read More" button
-            readMoreBtn.addEventListener('click', function() {
-                if (collapsedText.classList.contains('expanded')) {
-                    // Collapse
-                    collapsedText.classList.remove('expanded');
-                    collapsedText.innerHTML = fullText.substring(0, charLimit) + '...';
-
-                    // Add fade effect again
-                    const fadeElement = document.createElement('div');
-                    fadeElement.className = 'fade-out';
-                    collapsedText.appendChild(fadeElement);
-
-                    readMoreBtn.textContent = 'Show more';
-                } else {
-                    // Expand
-                    collapsedText.classList.add('expanded');
-                    collapsedText.textContent = fullText;
-                    readMoreBtn.textContent = 'Show less';
-                }
-            });
-        } else {
-            // If text is short, just show the original content
-            collapsedText.innerHTML = fullText;
-            collapsedText.style.display = 'block';
-            originalText.style.display = 'none';
-            readMoreBtn.style.display = 'none';
+    if (step === 'completed') {
+        for (let i = 0; i < steps.length; i++) {
+            const stepEl = document.getElementById('step-' + steps[i]);
+            const stepTextEl = stepEl.querySelector('.step-text');
+            stepEl.classList.add('completed');
+            stepTextEl.textContent = stepTexts[steps[i]].completed;
         }
     }
 }
